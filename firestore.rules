@@ -6,7 +6,7 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null
         && request.auth.token.email_verified == true
-        && request.auth.token.email == 'cesamendoza19@gmail.com';
+        && request.auth.token.email in ['cesamendoza19@gmail.com', 'araceltruji1984@gmail.com'];
     }
 
     // Citas: cualquiera puede crear una (sin cuenta) pero NADIE puede leerlas salvo la admin.

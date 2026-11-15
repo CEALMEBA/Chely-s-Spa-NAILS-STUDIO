@@ -8,6 +8,6 @@ export const firebaseConfig = {
 };
 
 // Correo de la administradora (solo para mostrar el panel; la seguridad real está en firestore.rules).
-export const ADMIN_EMAIL = "cesamendoza19@gmail.com";
+export const ADMIN_EMAILS = ["cesamendoza19@gmail.com", "araceltruji1984@gmail.com"];
 
 export const WHATSAPP_NEGOCIO = "522711206132";

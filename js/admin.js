@@ -6,7 +6,7 @@ import {
 import {
   getFirestore, collection, doc, writeBatch, query, where, orderBy, getDocs, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig, ADMIN_EMAIL } from "./firebase-config.js";
+import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
 
 const $ = (id) => document.getElementById(id);
 let auth = null, db = null;
@@ -27,7 +27,7 @@ $("btnGoogle").onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).c
 $("btnEntrar").onclick = () => signInWithEmailAndPassword(auth, $("email").value, $("pass").value)
   .catch(() => msg($("loginMsg"), "Correo o contraseña incorrectos"));
 
-const esAdmin = (u) => u && u.emailVerified && u.email === ADMIN_EMAIL;
+const esAdmin = (u) => u && u.emailVerified && ADMIN_EMAILS.includes(u.email);
 if (!auth) msg($("loginMsg"), "Firebase no está configurado (js/firebase-config.js).");
 else onAuthStateChanged(auth, (u) => {
   const ok = esAdmin(u);
