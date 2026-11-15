@@ -105,3 +105,6 @@ body{overflow-x:hidden}
   .hero-in{padding:30px 16px 10px}
   main{padding:16px 14px}
 }
+
+.hero-in .logo{display:block;width:clamp(96px,22vw,140px);height:auto;margin:0 auto 14px;filter:drop-shadow(0 4px 10px #0003)}
+.logo-f{opacity:.85;margin-bottom:6px;height:auto}
