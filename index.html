@@ -5,28 +5,71 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chely's Spa Nails Studio</title>
 <meta name="description" content="Barbería, pestañas, uñas y masajes terapéuticos. Agenda tu cita en línea.">
+<meta name="theme-color" content="#8e1230">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header class="hero">
-  <small>LADY BARBER</small>
-  <h1>Chely's Spa</h1>
-  <small>NAILS STUDIO</small>
-  <nav>
-    <a href="#servicios">Servicios</a>
-    <a href="#cita">Agendar cita</a>
-    <a href="#contacto">Contacto</a>
+<header class="hero big">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <nav class="top">
+    <span class="brand">Chely's Spa</span>
+    <span class="links">
+      <a href="#servicios">Servicios</a>
+      <a href="#estudio">Estudio</a>
+      <a href="#cita">Agendar</a>
+      <a href="#contacto">Contacto</a>
+    </span>
   </nav>
+  <div class="hero-in">
+    <small>LADY BARBER · PESTAÑAS · UÑAS · MASAJES</small>
+    <h1>Chely's Spa<em>Nails Studio</em></h1>
+    <p>Un espacio para cuidarte: belleza, relajación y bienestar en un solo lugar.</p>
+    <a class="btn cta" href="#cita">Agendar mi cita</a>
+  </div>
+  <svg class="wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40c240 60 480 60 720 20s480-40 720 10v10H0Z" fill="#fbf6f3"/></svg>
 </header>
 
 <main>
   <section id="servicios">
+    <p class="eyebrow">LO QUE HACEMOS</p>
     <h2>Nuestros servicios</h2>
     <div id="grid" class="grid"></div>
   </section>
 
+  <section id="estudio">
+    <p class="eyebrow">NUESTRO ESTUDIO</p>
+    <h2>Detalles que se sienten</h2>
+    <div class="gallery">
+    <figure class="tile t1">
+      <div class="art"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="21" width="22" height="22" rx="6"/><path d="M19 21v-5h10v5M21 16V5h6v11"/><path d="M19 30c3-2 7 2 10 0"/></svg></div>
+      <figcaption><b>Uñas</b><span>Gelish, acrílicas, espejo</span></figcaption>
+    </figure>
+    <figure class="tile t2">
+      <div class="art"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 28c6-9 14-13 20-13s14 4 20 13c-6 7-14 10-20 10S10 35 4 28Z"/><circle cx="24" cy="27" r="6"/><path d="M8 20 5 14M16 15l-2-6M24 13V6M32 15l2-6M40 20l3-6"/></svg></div>
+      <figcaption><b>Pestañas</b><span>Clásicas, volumen, híbridas</span></figcaption>
+    </figure>
+    <figure class="tile t3">
+      <div class="art"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="35" r="5.5"/><circle cx="35" cy="35" r="5.5"/><path d="M17 31 38 7M31 31 10 7"/></svg></div>
+      <figcaption><b>Barbería</b><span>Corte y barba</span></figcaption>
+    </figure>
+    <figure class="tile t4">
+      <div class="art"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 40c-6-4-9-10-9-17 5 1 8 5 9 10 1-5 4-9 9-10 0 7-3 13-9 17Z"/><path d="M24 33C20 26 21 15 24 7c3 8 4 19 0 26Z"/><path d="M6 33c6 1 10 4 12 8M42 33c-6 1-10 4-12 8"/></svg></div>
+      <figcaption><b>Masajes</b><span>Relajantes y terapéuticos</span></figcaption>
+    </figure>
+    <figure class="tile t5">
+      <div class="art"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="22" r="8"/><path d="M24 5v5M24 34v5M7 22h5M36 22h5M12 10l4 4M32 30l4 4M36 10l-4 4M16 30l-4 4"/><path d="M14 44h20"/></svg></div>
+      <figcaption><b>Aparatos</b><span>Compresas e infrarrojo</span></figcaption>
+    </figure>
+    </div>
+  </section>
+
   <section id="cita">
+    <p class="eyebrow">RESERVA EN LÍNEA</p>
     <h2>Agenda tu cita</h2>
+    <p class="lead">Elige tu servicio, el día y la hora: solo verás los horarios disponibles.</p>
 
     <form id="formCita" class="card">
       <label>Tu nombre
@@ -38,30 +81,33 @@
       <label>Servicio
         <select id="servicio" required></select>
       </label>
-      <label>Día (lunes a sábado)
-        <input type="date" id="fecha" required>
-      </label>
-      <label>Hora (solo se muestran las disponibles)
-        <select id="hora" required><option value="">Elige un día primero</option></select>
-      </label>
+      <div class="two">
+        <label>Día (lunes a sábado)
+          <input type="date" id="fecha" required>
+        </label>
+        <label>Hora (solo las disponibles)
+          <select id="hora" required><option value="">Elige un día primero</option></select>
+        </label>
+      </div>
       <label>Notas (opcional)
         <textarea id="notas" maxlength="200" rows="2"></textarea>
       </label>
       <button class="btn" type="submit">Reservar</button>
       <p id="msg" class="msg"></p>
     </form>
-
   </section>
 
   <section id="contacto">
+    <p class="eyebrow">VISÍTANOS</p>
     <h2>Contacto</h2>
-    <p><b>Tel / WhatsApp:</b> 271 120 6132</p>
-    <p><b>Facebook:</b> Chely's Spa Nails Studio</p>
-    <p><b>Dirección:</b> Av. 7 Poniente entre Calle 4 y 6, Colonia Centro No. 303</p>
-    <p><b>Horario:</b> Lunes a sábado, 10:00 am a 7:00 pm</p>
+    <div class="contact">
+      <div><b>Tel / WhatsApp</b><span>271 120 6132</span></div>
+      <div><b>Facebook</b><span>Chely's Spa Nails Studio</span></div>
+      <div><b>Dirección</b><span>Av. 7 Poniente entre Calle 4 y 6, Colonia Centro No. 303</span></div>
+      <div><b>Horario</b><span>Lunes a sábado, 10:00 am a 7:00 pm</span></div>
+    </div>
   </section>
 </main>
-
 
 <footer>© Chely's Spa Nails Studio</footer>
 <script type="module" src="js/app.js"></script>
