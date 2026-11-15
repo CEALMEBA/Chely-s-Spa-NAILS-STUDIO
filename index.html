@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chely's Spa Nails Studio</title>
+<meta name="description" content="Barbería, pestañas, uñas y masajes terapéuticos. Agenda tu cita en línea.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="hero">
+  <small>LADY BARBER</small>
+  <h1>Chely's Spa</h1>
+  <small>NAILS STUDIO</small>
+  <nav>
+    <a href="#servicios">Servicios</a>
+    <a href="#cita">Agendar cita</a>
+    <a href="#contacto">Contacto</a>
+  </nav>
+</header>
+
+<main>
+  <section id="servicios">
+    <h2>Nuestros servicios</h2>
+    <div id="grid" class="grid"></div>
+  </section>
+
+  <section id="cita">
+    <h2>Agenda tu cita</h2>
+
+    <form id="formCita" class="card">
+      <label>Tu nombre
+        <input type="text" id="nombre" maxlength="60" placeholder="Nombre completo" required>
+      </label>
+      <label>Tu WhatsApp (10 dígitos)
+        <input type="tel" id="telefono" pattern="[0-9]{10}" maxlength="10" placeholder="2711206132" required>
+      </label>
+      <label>Servicio
+        <select id="servicio" required></select>
+      </label>
+      <label>Día (lunes a sábado)
+        <input type="date" id="fecha" required>
+      </label>
+      <label>Hora (solo se muestran las disponibles)
+        <select id="hora" required><option value="">Elige un día primero</option></select>
+      </label>
+      <label>Notas (opcional)
+        <textarea id="notas" maxlength="200" rows="2"></textarea>
+      </label>
+      <button class="btn" type="submit">Reservar</button>
+      <p id="msg" class="msg"></p>
+    </form>
+
+  </section>
+
+  <section id="contacto">
+    <h2>Contacto</h2>
+    <p><b>Tel / WhatsApp:</b> 271 120 6132</p>
+    <p><b>Facebook:</b> Chely's Spa Nails Studio</p>
+    <p><b>Dirección:</b> Av. 7 Poniente entre Calle 4 y 6, Colonia Centro No. 303</p>
+    <p><b>Horario:</b> Lunes a sábado, 10:00 am a 7:00 pm</p>
+  </section>
+</main>
+
+
+<footer>© Chely's Spa Nails Studio</footer>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

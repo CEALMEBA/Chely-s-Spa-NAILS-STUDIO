@@ -1,0 +1,41 @@
+:root{--red:#c8102e;--teal:#0b6b78;--purple:#6b2fa5;--pink:#a3125c;--orange:#b84a0c;--green:#2e6b12}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#222;background:#faf7f7;line-height:1.5}
+.hero{background:var(--red);color:#fff;text-align:center;padding:28px 16px 12px}
+.hero small{letter-spacing:.35em;font-weight:700}
+.hero h1{margin:6px 0;font-size:clamp(2.2rem,8vw,3.6rem);font-style:italic}
+.hero nav{display:flex;gap:14px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:14px}
+.hero nav a{color:#fff;text-decoration:none;font-weight:600}
+main{max-width:900px;margin:0 auto;padding:16px}
+section{margin:28px 0}
+h2{color:var(--red)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.cat{border-radius:14px;padding:14px 16px}
+.cat h3{margin:0 0 6px}
+.cat ul{margin:0;padding-left:18px}
+.card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 6px #0001;display:grid;gap:10px}
+label{display:grid;gap:4px;font-weight:600;font-size:.92rem}
+input,select,textarea{padding:10px;border:1px solid #ccc;border-radius:8px;font:inherit;width:100%}
+.btn{background:var(--red);color:#fff;border:0;border-radius:10px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
+.btn.light{background:#fff;color:var(--red)}
+.btn.light.dark{background:#eee;color:#333}
+.btn.small{padding:6px 10px;font-size:.85rem}
+.btn.wa{background:#25d366}
+.btn.gray{background:#777}
+.btn.google{background:#fff;color:#333;border:1px solid #ccc;width:100%}
+.link{background:none;border:0;color:#666;text-decoration:underline;cursor:pointer;margin-top:8px}
+.msg{min-height:1.2em;font-size:.9rem;color:var(--red);margin:0}
+.msg.ok{color:var(--green)}
+.cita{background:#fff;border-left:5px solid var(--red);border-radius:10px;padding:12px;margin:10px 0;box-shadow:0 1px 4px #0001;display:grid;gap:6px}
+.cita .acts{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.78rem;font-weight:700;background:#eee}
+.badge.confirmada{background:#d4f5dc;color:#116b2a}
+.badge.cancelada{background:#fbd5d5;color:#8a1111}
+.badge.pendiente{background:#fff0c2;color:#7a5a00}
+.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:8px}
+dialog{border:0;border-radius:16px;padding:22px;width:min(92vw,360px)}
+dialog::backdrop{background:#0008}
+dialog form{display:grid;gap:10px}
+.row{display:flex;gap:8px}.row .btn{flex:1}
+.sep{text-align:center;color:#888;margin:0}
+footer{text-align:center;padding:24px;color:#888;font-size:.85rem}

@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // CAMBIA este correo por el de la administradora (debe ser una cuenta verificada, p. ej. Google)
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'CORREO_ADMIN@gmail.com';
+    }
+
+    // Citas: cualquiera puede crear una (sin cuenta) pero NADIE puede leerlas salvo la admin.
+    match /appointments/{id} {
+      allow read: if isAdmin();
+      allow create: if request.resource.data.estado == 'pendiente'
+        && request.resource.data.nombre is string && request.resource.data.nombre.size() > 0 && request.resource.data.nombre.size() <= 60
+        && request.resource.data.telefono.matches('^[0-9]{10}$')
+        && request.resource.data.keys().hasOnly(['nombre','telefono','servicio','notas','fecha','hora','slotId','estado','creada']);
+      allow update, delete: if isAdmin();
+    }
+
+    // Horarios ocupados: solo fecha/hora, sin datos personales. Un horario no se puede reservar dos veces
+    // (el id es fijo y no se permite update, así el segundo intento falla).
+    match /slots/{slotId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['fecha','hora'])
+        && slotId == request.resource.data.fecha + '_' + request.resource.data.hora.replace(':', '');
+      allow delete: if isAdmin();
+      allow update: if false;
+    }
+  }
+}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Administración · Chely's Spa</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="hero">
+  <h1>Administración</h1>
+  <nav><button id="btnLogout" class="btn light" hidden>Salir</button></nav>
+</header>
+<main>
+  <section>
+    <div id="loginBox" class="card">
+      <h3>Acceso administradora</h3>
+      <button type="button" class="btn google" id="btnGoogle">Continuar con Google</button>
+      <p class="sep">o con correo</p>
+      <input type="email" id="email" placeholder="Correo">
+      <input type="password" id="pass" placeholder="Contraseña">
+      <button type="button" class="btn" id="btnEntrar">Entrar</button>
+      <p id="loginMsg" class="msg"></p>
+    </div>
+    <!-- PANEL ADMIN -->
+    <div id="adminArea" hidden>
+      <h3>Panel de administración</h3>
+      <div class="filters">
+        <label>Ver desde <input type="date" id="adminDesde"></label>
+        <button class="btn small" id="adminRefrescar">Actualizar</button>
+      </div>
+      <div id="adminCitas"></div>
+    </div>
+  </section>
+</main>
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>
