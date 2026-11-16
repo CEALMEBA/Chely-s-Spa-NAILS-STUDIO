@@ -38,15 +38,20 @@ $("fecha").min = hoy();
 // Fecha local (no UTC) para comparar con "hoy" y la hora actual de la clienta.
 const isoLocal = (d) => { d = new Date(d); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 $("fecha").min = isoLocal(new Date());   // no se pueden elegir días pasados
+// Aviso visible que explica por qué una fecha u hora no está disponible.
+const aviso = (t) => { const el = $("aviso"); el.textContent = t || ""; el.hidden = !t; };
 $("fecha").addEventListener("change", async () => {
   const f = $("fecha").value;
+  aviso("");
   if (!f) return;
   if (f < isoLocal(new Date())) {
-    $("fecha").value = ""; $("hora").innerHTML = `<option value="">Elige una fecha de hoy en adelante</option>`; return;
+    $("fecha").value = ""; $("hora").innerHTML = `<option value="">Elige otra fecha</option>`;
+    aviso("Esa fecha ya pasó. Elige hoy o un día próximo."); return;
   }
   if (!db) { $("hora").innerHTML = `<option value="">Sistema no configurado</option>`; return; }
   if (new Date(f + "T12:00:00").getDay() === 0) {
-    $("hora").innerHTML = `<option value="">Domingo cerrado</option>`; return;
+    $("hora").innerHTML = `<option value="">Domingo cerrado</option>`;
+    aviso("Los domingos estamos cerrados. Atendemos de lunes a sábado, de 10:00 am a 7:00 pm."); return;
   }
   $("hora").innerHTML = `<option value="">Consultando…</option>`;
   let ocupadas;
@@ -59,6 +64,10 @@ $("fecha").addEventListener("change", async () => {
   $("hora").innerHTML = libres.length
     ? libres.map(h => `<option>${h}</option>`).join("")
     : `<option value="">Sin horarios libres ese día</option>`;
+  const hayPasadas = f === hoyIso && HORAS.some(h => h <= hhmm && !ocupadas.has(h));
+  if (!libres.length) aviso(HORAS.every(h => ocupadas.has(h)) ? "Ese día ya no tiene horarios libres: todos están ocupados. Elige otro día."
+    : "Ya no quedan horarios para hoy: los que faltan ya pasaron o están ocupados. Elige otro día.");
+  else if (ocupadas.size || hayPasadas) aviso("Solo ves los horarios disponibles: los demás ya están ocupados" + (hayPasadas ? " o ya pasaron" : "") + ". Atendemos de 10:00 am a 7:00 pm.");
 });
 
 /* ---------- Reservar ---------- */
