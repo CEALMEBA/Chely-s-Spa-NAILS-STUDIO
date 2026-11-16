@@ -23,7 +23,7 @@ const iso = (d) => { d = new Date(d); d.setMinutes(d.getMinutes() - d.getTimezon
 const hoy = () => iso(new Date());
 const masDias = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return iso(d); };
 const fmtFecha = (f) => new Date(f + "T12:00:00").toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
-const waLink = (tel, texto) => `https://wa.me/52${tel}?text=${encodeURIComponent(texto)}`;
+const waLink = (tel, texto) => `https://api.whatsapp.com/send?phone=52${tel}&text=${encodeURIComponent(texto)}`;
 const msg = (el, t) => { el.textContent = t; el.className = "msg"; };
 const toast = (t) => {
   const el = $("toast"); el.textContent = t; el.classList.add("show");

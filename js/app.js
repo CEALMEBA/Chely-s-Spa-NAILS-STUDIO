@@ -29,7 +29,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<"
 // Fecha local (no UTC): en México, después de las 18:00, toISOString() ya da el día siguiente.
 const hoy = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const fmtFecha = (f) => new Date(f + "T12:00:00").toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
-const waLink = (tel, texto) => `https://wa.me/52${tel}?text=${encodeURIComponent(texto)}`;
+const waLink = (tel, texto) => `https://api.whatsapp.com/send?phone=52${tel}&text=${encodeURIComponent(texto)}`;
 const msg = (el, t, ok) => { el.textContent = t; el.className = "msg" + (ok ? " ok" : ""); };
 
 $("fecha").min = hoy();
