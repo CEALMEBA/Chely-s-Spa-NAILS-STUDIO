@@ -4,37 +4,81 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#6d0f27">
 <title>Administración · Chely's Spa</title>
 <link rel="icon" type="image/png" href="img/logo-flor.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-<header class="hero">
-  <h1>Administración</h1>
-  <nav><button id="btnLogout" class="btn light" hidden>Salir</button></nav>
+<body class="adm">
+<header class="adm-top">
+  <div class="adm-brand">
+    <img src="img/logo-flor-blanco.png" alt="" width="40" height="33">
+    <div><b>Chely's Spa</b><small>Panel de citas</small></div>
+  </div>
+  <div class="adm-user">
+    <span id="admUser" class="adm-mail"></span>
+    <button id="btnLogout" class="btn small light" hidden>Salir</button>
+  </div>
 </header>
-<main>
-  <section>
-    <div id="loginBox" class="card">
-      <h3>Acceso administradora</h3>
-      <button type="button" class="btn google" id="btnGoogle">Continuar con Google</button>
-      <p class="sep">o con correo</p>
-      <input type="email" id="email" placeholder="Correo">
-      <input type="password" id="pass" placeholder="Contraseña">
-      <button type="button" class="btn" id="btnEntrar">Entrar</button>
-      <p id="loginMsg" class="msg"></p>
-    </div>
-    <!-- PANEL ADMIN -->
-    <div id="adminArea" hidden>
-      <h3>Panel de administración</h3>
-      <div class="filters">
-        <label>Ver desde <input type="date" id="adminDesde"></label>
-        <button class="btn small" id="adminRefrescar">Actualizar</button>
+
+<main class="adm-main">
+  <!-- LOGIN -->
+  <div id="loginBox" class="card adm-login">
+    <img src="img/logo-flor.png" alt="" width="72" height="59" class="adm-login-logo">
+    <h2>Bienvenida</h2>
+    <p class="lead">Entra para ver y administrar las citas.</p>
+    <button type="button" class="btn google" id="btnGoogle">Continuar con Google</button>
+    <p class="sep">o con correo</p>
+    <input type="email" id="email" placeholder="Correo" autocomplete="username">
+    <input type="password" id="pass" placeholder="Contraseña" autocomplete="current-password">
+    <button type="button" class="btn" id="btnEntrar">Entrar</button>
+    <p id="loginMsg" class="msg"></p>
+  </div>
+
+  <!-- PANEL -->
+  <div id="adminArea" hidden>
+    <div class="adm-hello">
+      <div>
+        <p class="eyebrow" id="admHoy"></p>
+        <h2 id="admSaludo">Hola</h2>
       </div>
-      <div id="adminCitas"></div>
+      <span class="live" id="admLive"><i></i>En vivo</span>
     </div>
-  </section>
+
+    <div class="stats" id="stats">
+      <button class="stat" data-go="hoy"><b id="stHoy">0</b><span>Citas hoy</span></button>
+      <button class="stat warn" data-go="pendiente"><b id="stPend">0</b><span>Por confirmar</span></button>
+      <button class="stat ok" data-go="confirmada"><b id="stConf">0</b><span>Confirmadas</span></button>
+      <button class="stat" data-go="semana"><b id="stSem">0</b><span>Próximos 7 días</span></button>
+    </div>
+
+    <div class="toolbar">
+      <div class="chips" id="chipsRango" role="tablist">
+        <button class="chip on" data-rango="todo">Todas</button>
+        <button class="chip" data-rango="hoy">Hoy</button>
+        <button class="chip" data-rango="manana">Mañana</button>
+        <button class="chip" data-rango="semana">7 días</button>
+      </div>
+      <div class="chips" id="chipsEstado" role="tablist">
+        <button class="chip on" data-estado="activas">Activas</button>
+        <button class="chip" data-estado="pendiente">Pendientes</button>
+        <button class="chip" data-estado="confirmada">Confirmadas</button>
+        <button class="chip" data-estado="cancelada">Canceladas</button>
+      </div>
+      <div class="tool-row">
+        <input type="search" id="buscar" placeholder="Buscar por nombre, teléfono o servicio">
+        <label class="desde">Desde <input type="date" id="adminDesde"></label>
+      </div>
+    </div>
+
+    <div id="adminCitas" class="agenda"></div>
+  </div>
 </main>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script type="module" src="js/admin.js"></script>
 </body>
 </html>
