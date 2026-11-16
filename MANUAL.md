@@ -18,7 +18,7 @@ No hace falta crear cuenta ni iniciar sesión.
    - **Hora**: solo aparecen las horas **libres** de ese día (10:00 a 18:00). Si una hora no aparece, ya está ocupada.
    - **Notas** (opcional): por ejemplo "primera vez" o el diseño que quieres.
 3. Pulsa **Reservar**.
-4. Verás el mensaje **"¡Cita solicitada! Te confirmaremos por WhatsApp."**
+4. Aparece una ventana con una palomita verde: **"¡Tu cita fue agendada!"**, el resumen (servicio con su ícono, día y hora) y el aviso **"Espera nuestro mensaje de confirmación por WhatsApp"** con su número. Se cierra con **¡Entendido!**
 
 Importante:
 - La cita queda como **pendiente** hasta que Chely la confirme por WhatsApp.

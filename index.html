@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="img/logo-flor.png">
-<link rel="stylesheet" href="css/style.css?v=20261116b">
+<link rel="stylesheet" href="css/style.css?v=20261116c">
 </head>
 <body>
 <header class="hero big">
@@ -111,7 +111,19 @@
   </section>
 </main>
 
+<dialog id="okCita" class="exito" aria-labelledby="okTitulo">
+  <div class="ok-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-15"/></svg></div>
+  <h3 id="okTitulo">¡Tu cita fue agendada!</h3>
+  <p class="ok-hola" id="okHola"></p>
+  <div class="ok-resumen" id="okResumen"></div>
+  <div class="ok-wa">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg>
+    <span><b>Espera nuestro mensaje de confirmación</b> por WhatsApp al <b id="okTel"></b>.</span>
+  </div>
+  <button type="button" class="btn" id="okCerrar">¡Entendido!</button>
+</dialog>
+
 <footer><img class="logo-f" src="img/logo-flor.png" alt="" width="56" height="46"><br>© Chely's Spa Nails Studio</footer>
-<script type="module" src="js/app.js?v=20261116"></script>
+<script type="module" src="js/app.js?v=20261116b"></script>
 </body>
 </html>

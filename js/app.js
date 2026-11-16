@@ -4,7 +4,7 @@ import {
   serverTimestamp, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js?v=20261116";
-import { ICONOS, CATALOGO } from "./catalogo.js?v=20261116";
+import { ICONOS, CATALOGO, categoriaDe } from "./catalogo.js?v=20261116";
 
 let db = null;
 try {
@@ -71,7 +71,8 @@ $("formCita").addEventListener("submit", async (e) => {
       fecha, hora, slotId, estado: "pendiente", creada: serverTimestamp()
     });
     await b.commit();
-    msg($("msg"), "¡Cita solicitada! Te confirmaremos por WhatsApp.", true);
+    msg($("msg"), "");
+    mostrarExito({ nombre: $("nombre").value.trim(), telefono: $("telefono").value, servicio: $("servicio").value, fecha, hora });
     $("formCita").reset(); $("hora").innerHTML = "";
   } catch (err) {
     console.error(err);
@@ -82,3 +83,20 @@ $("formCita").addEventListener("submit", async (e) => {
   }
 });
 
+
+/* ---------- Aviso de cita agendada ---------- */
+function mostrarExito(c) {
+  const cat = categoriaDe(c.servicio);
+  const [catNombre, srv] = String(c.servicio).split(" - ");
+  const dlg = $("okCita");
+  dlg.style.cssText = cat ? `--c:${cat.color};--t:${cat.tx}` : "";
+  $("okHola").textContent = `Gracias, ${c.nombre.split(" ")[0]} 🌸 Ya tenemos tu solicitud.`;
+  $("okResumen").innerHTML = `
+    <div class="ci">${ICONOS[cat ? cat.ico : "esmalte"]}</div>
+    <div><b>${esc(srv || catNombre)}</b><small>${esc(srv ? (cat ? cat.cat : catNombre) : "")}</small>
+    <span>📅 ${esc(fmtFecha(c.fecha))} · 🕐 ${esc(c.hora)}</span></div>`;
+  $("okTel").textContent = c.telefono.replace(/(\d{3})(\d{3})(\d{4})/, "$1 $2 $3");
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+}
+$("okCerrar").addEventListener("click", () => $("okCita").close ? $("okCita").close() : $("okCita").removeAttribute("open"));
+$("okCita").addEventListener("click", (e) => { if (e.target === $("okCita")) $("okCita").close(); });

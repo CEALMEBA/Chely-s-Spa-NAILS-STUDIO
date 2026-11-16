@@ -202,3 +202,26 @@ body.adm{background:linear-gradient(180deg,#f6e7e4 0,var(--cream) 260px)}
 @keyframes gira{to{transform:rotate(360deg)}}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:#2a1f22;color:#fff;padding:11px 20px;border-radius:99px;font-size:.88rem;box-shadow:0 8px 24px #0004;opacity:0;pointer-events:none;transition:all .3s;z-index:20;max-width:calc(100% - 32px)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Aviso de cita agendada ---------- */
+dialog.exito{width:min(calc(100vw - 32px),400px);padding:28px 22px 22px;border-radius:24px;text-align:center;display:grid;gap:12px;box-shadow:0 20px 60px #6d0f2740}
+dialog.exito:not([open]){display:none}
+dialog.exito[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1) both}
+dialog.exito::backdrop{background:#3a0a16a6;backdrop-filter:blur(3px)}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.exito h3{margin:0;font-family:'Playfair Display',Georgia,serif;color:var(--wine);font-size:1.6rem}
+.ok-hola{margin:0;color:#6a5a5e}
+.ok-check{width:72px;height:72px;margin:0 auto}
+.ok-check svg{width:100%;height:100%;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.ok-check circle{stroke:var(--green);fill:#e6f0da;stroke-dasharray:151;stroke-dashoffset:151;animation:traza .6s ease forwards}
+.ok-check path{stroke:var(--green);stroke-dasharray:36;stroke-dashoffset:36;animation:traza .35s .5s ease forwards}
+@keyframes traza{to{stroke-dashoffset:0}}
+.ok-resumen{display:flex;gap:12px;align-items:center;text-align:left;background:var(--c,var(--rose));border-radius:16px;padding:12px 14px}
+.ok-resumen .ci{flex:none;width:48px;height:48px;border-radius:14px;background:#fff;color:var(--t,var(--wine));display:grid;place-items:center}
+.ok-resumen .ci svg{width:30px;height:30px}
+.ok-resumen b{display:block;color:var(--t,var(--wine))}
+.ok-resumen small{display:block;font-size:.78rem;color:#6a5a5e}
+.ok-resumen span{display:block;font-size:.86rem;margin-top:2px;text-transform:capitalize}
+.ok-wa{display:flex;gap:10px;align-items:center;text-align:left;font-size:.9rem;background:#e9f7ee;color:#1f5130;border-radius:14px;padding:10px 12px}
+.ok-wa svg{flex:none;width:26px;height:26px;color:#25a244}
+.exito .btn{width:100%}
