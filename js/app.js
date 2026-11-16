@@ -3,8 +3,8 @@ import {
   getFirestore, collection, doc, writeBatch, query, where, orderBy, getDocs,
   serverTimestamp, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js";
-import { ICONOS, CATALOGO } from "./catalogo.js";
+import { firebaseConfig } from "./firebase-config.js?v=20261116";
+import { ICONOS, CATALOGO } from "./catalogo.js?v=20261116";
 
 let db = null;
 try {

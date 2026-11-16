@@ -82,4 +82,5 @@ Que revise que el WhatsApp tenga 10 dígitos y que haya elegido una hora de la l
 - **Reglas de seguridad:** `firestore.rules`. Cualquiera puede crear una cita y ver las horas ocupadas. Solo la administradora puede leer, confirmar o cancelar citas. Al cambiarlas hay que pegarlas también en Firebase → Firestore → Reglas → Publicar.
 - **Agregar otra administradora:** añadir su correo (Google) o su ID de usuario a las reglas y a `js/firebase-config.js`.
 - **Índice de Firestore:** la primera vez que se abra el panel puede pedir un índice. En la consola del navegador (F12) aparece un enlace; al abrirlo y pulsar **Crear** queda listo en unos minutos.
+- **Versión de archivos (caché):** los enlaces a CSS y JS llevan `?v=AAAAMMDD` (en `index.html`, `admin.html` y en los `import` de `js/admin.js` y `js/app.js`). Al cambiar CSS o JS, sube ese número en todos lados para que los celulares no mezclen archivos viejos y nuevos.
 - **Seguridad:** no subir contraseñas al repositorio. Usar contraseñas largas para el panel.
