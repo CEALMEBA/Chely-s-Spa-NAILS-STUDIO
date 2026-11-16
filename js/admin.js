@@ -44,6 +44,43 @@ const calLink = (c) => {
   return "https://calendar.google.com/calendar/render?" + p;
 };
 
+/* ---------- Mensajes de WhatsApp ---------- */
+// Emoji y frase según la categoría del servicio (primera palabra de la categoría en catalogo.js).
+const ESTILO_WA = {
+  "Barbería": { e: "💈", f: "✂️ Te dejaremos con un look impecable y a tu estilo." },
+  "Pestañas": { e: "👁️", f: "✨ Para un mejor resultado, te recomendamos venir sin maquillaje en los ojos." },
+  "Uñas":     { e: "💅", f: "💖 Prepárate para lucir unas uñas espectaculares." },
+  "Masajes":  { e: "💆‍♀️", f: "🌿 Ven con ropa cómoda y prepárate para un momento de relajación total." },
+  "Aparatos": { e: "🔆", f: "🌿 Un tratamiento pensado para tu bienestar y recuperación." },
+  "Te":       { e: "🩺", f: "🤍 Al llegar, cuéntanos tus molestias para darte la mejor atención." }
+};
+const estiloWa = (servicio) => ESTILO_WA[String(servicio || "").split(" - ")[0]] || { e: "🌸", f: "💖 Será un gusto atenderte." };
+
+const mensajeWa = (c, tipo) => {
+  const { e, f } = estiloWa(c.servicio);
+  const srv = String(c.servicio || "").split(" - ").pop();
+  const encabezado = tipo === "confirmar"
+    ? `¡Hola, ${c.nombre}! 🌸\nTu cita ha sido *confirmada* ✅`
+    : `¡Hola, ${c.nombre}! 🌸\n🔔 Te recordamos tu próxima cita con nosotras.`;
+  return [
+    `✨ *Chely's Spa Nails Studio* ✨`,
+    ``,
+    encabezado,
+    ``,
+    `${e} *Servicio:* ${srv}`,
+    `📅 *Fecha:* ${fmtFecha(c.fecha)}`,
+    `🕐 *Hora:* ${c.hora}`,
+    `📍 *Dirección:* Av. 7 Poniente No. 303, Col. Centro`,
+    ``,
+    f,
+    ``,
+    `⏰ *¡No se te olvide asistir!* Te esperamos puntual.`,
+    `Si necesitas cambiar tu cita, avísanos por este medio con anticipación. 🙏`,
+    ``,
+    `¡Gracias por tu preferencia! 💖`
+  ].join("\n");
+};
+
 const SVG = {
   wa: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.2c0-.1-.2-.2-.5-.3Z"/></svg>`,
   cal: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>`,
@@ -174,11 +211,9 @@ function tarjeta(c) {
   const tel = esc(c.telefono);
   // Un solo botón de WhatsApp: confirmar si está pendiente, recordar si ya se confirmó.
   const wa = c.estado === "pendiente"
-    ? `<a class="act wa" target="_blank" rel="noopener" data-conf="${c.id}" href="${waLink(tel,
-        `Hola ${c.nombre}, te confirmamos tu cita en Chely's Spa: ${c.servicio}, ${fmtFecha(c.fecha)} a las ${c.hora}. ¡Te esperamos!`)}">${SVG.wa}Confirmar</a>`
+    ? `<a class="act wa" target="_blank" rel="noopener" data-conf="${c.id}" href="${waLink(tel, mensajeWa(c, "confirmar"))}">${SVG.wa}Confirmar</a>`
     : c.estado === "confirmada"
-    ? `<a class="act wa" target="_blank" rel="noopener" href="${waLink(tel,
-        `Hola ${c.nombre}, te recordamos tu cita de ${c.servicio} el ${fmtFecha(c.fecha)} a las ${c.hora} en Chely's Spa.`)}">${SVG.wa}Recordar</a>`
+    ? `<a class="act wa" target="_blank" rel="noopener" href="${waLink(tel, mensajeWa(c, "recordar"))}">${SVG.wa}Recordar</a>`
     : "";
   const activa = c.estado !== "cancelada";
   return `<article class="cita2 ${esc(c.estado)}" style="${estilo}" data-id="${c.id}">
