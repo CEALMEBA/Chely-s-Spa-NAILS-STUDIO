@@ -47,7 +47,8 @@ $("servicio").innerHTML = CATALOGO.flatMap(c =>
 
 /* ---------- Utilidades ---------- */
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
-const hoy = () => new Date().toISOString().slice(0, 10);
+// Fecha local (no UTC): en México, después de las 18:00, toISOString() ya da el día siguiente.
+const hoy = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const fmtFecha = (f) => new Date(f + "T12:00:00").toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
 const waLink = (tel, texto) => `https://wa.me/52${tel}?text=${encodeURIComponent(texto)}`;
 const msg = (el, t, ok) => { el.textContent = t; el.className = "msg" + (ok ? " ok" : ""); };
@@ -93,8 +94,11 @@ $("formCita").addEventListener("submit", async (e) => {
     await b.commit();
     msg($("msg"), "¡Cita solicitada! Te confirmaremos por WhatsApp.", true);
     $("formCita").reset(); $("hora").innerHTML = "";
-  } catch {
-    msg($("msg"), "Ese horario ya fue tomado. Elige otro.");
+  } catch (err) {
+    console.error(err);
+    msg($("msg"), err.code === "permission-denied"
+      ? "Ese horario ya fue tomado o algún dato no es válido. Revisa e intenta de nuevo."
+      : "No se pudo reservar (" + (err.code || "error de conexión") + "). Intenta de nuevo.");
     $("fecha").dispatchEvent(new Event("change"));
   }
 });

@@ -16,7 +16,8 @@ try {
 } catch (e) { console.warn("Firebase no configurado:", e.message); }
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
-const hoy = () => new Date().toISOString().slice(0, 10);
+// Fecha local (no UTC): en México, después de las 18:00, toISOString() ya da el día siguiente.
+const hoy = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const fmtFecha = (f) => new Date(f + "T12:00:00").toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
 const waLink = (tel, texto) => `https://wa.me/52${tel}?text=${encodeURIComponent(texto)}`;
 const msg = (el, t) => { el.textContent = t; el.className = "msg"; };
@@ -39,8 +40,17 @@ else onAuthStateChanged(auth, (u) => {
 
 /* ---------- Panel admin ---------- */
 async function cargarAdmin() {
-  const q = query(collection(db, "appointments"), where("fecha", ">=", $("adminDesde").value), orderBy("fecha"), orderBy("hora"));
-  const lista = (await getDocs(q)).docs.map(d => ({ id: d.id, ...d.data() }));
+  // Solo orderBy("fecha") para no depender de un índice compuesto; la hora se ordena aquí.
+  const q = query(collection(db, "appointments"), where("fecha", ">=", $("adminDesde").value || hoy()), orderBy("fecha"));
+  let lista;
+  try {
+    lista = (await getDocs(q)).docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.error(e);
+    $("adminCitas").innerHTML = `<p class="msg">No se pudieron cargar las citas (${esc(e.code || e.message)}).</p>`;
+    return;
+  }
+  lista.sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora));
   $("adminCitas").innerHTML = !lista.length ? "<p>Sin citas.</p>" : lista.map(c => {
     const txtConf = `Hola ${c.nombre}, te confirmamos tu cita en Chely's Spa: ${c.servicio}, ${fmtFecha(c.fecha)} a las ${c.hora}. ¡Te esperamos!`;
     const txtRec = `Hola ${c.nombre}, te recordamos tu cita de ${c.servicio} el ${fmtFecha(c.fecha)} a las ${c.hora} en Chely's Spa.`;
