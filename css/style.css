@@ -1,3 +1,4 @@
+[hidden]{display:none!important}
 :root{--wine:#8e1230;--rose:#f6e7e4;--cream:#fbf6f3;--gold:#c9a45c;--red:#c8102e;--teal:#0b6b78;--purple:#6b2fa5;--pink:#a3125c;--orange:#b84a0c;--green:#2e6b12}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
