@@ -35,9 +35,15 @@ const msg = (el, t, ok) => { el.textContent = t; el.className = "msg" + (ok ? " 
 $("fecha").min = hoy();
 
 /* ---------- Horarios disponibles ---------- */
+// Fecha local (no UTC) para comparar con "hoy" y la hora actual de la clienta.
+const isoLocal = (d) => { d = new Date(d); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+$("fecha").min = isoLocal(new Date());   // no se pueden elegir días pasados
 $("fecha").addEventListener("change", async () => {
   const f = $("fecha").value;
   if (!f) return;
+  if (f < isoLocal(new Date())) {
+    $("fecha").value = ""; $("hora").innerHTML = `<option value="">Elige una fecha de hoy en adelante</option>`; return;
+  }
   if (!db) { $("hora").innerHTML = `<option value="">Sistema no configurado</option>`; return; }
   if (new Date(f + "T12:00:00").getDay() === 0) {
     $("hora").innerHTML = `<option value="">Domingo cerrado</option>`; return;
@@ -48,7 +54,8 @@ $("fecha").addEventListener("change", async () => {
     const q = query(collection(db, "slots"), where("fecha", "==", f));
     ocupadas = new Set((await getDocs(q)).docs.map(d => d.data().hora));
   } catch { $("hora").innerHTML = `<option value="">No se pudo consultar</option>`; return; }
-  const libres = HORAS.filter(h => !ocupadas.has(h));
+  const ahora = new Date(), hoyIso = isoLocal(ahora), hhmm = String(ahora.getHours()).padStart(2, "0") + ":" + String(ahora.getMinutes()).padStart(2, "0");
+  const libres = HORAS.filter(h => !ocupadas.has(h) && !(f === hoyIso && h <= hhmm));   // hoy: solo horas que aún no pasan
   $("hora").innerHTML = libres.length
     ? libres.map(h => `<option>${h}</option>`).join("")
     : `<option value="">Sin horarios libres ese día</option>`;
@@ -59,6 +66,7 @@ $("formCita").addEventListener("submit", async (e) => {
   e.preventDefault();
   const fecha = $("fecha").value, hora = $("hora").value;
   if (!hora) return msg($("msg"), "Elige un horario disponible");
+  if (new Date(fecha + "T12:00:00").getDay() === 0) return msg($("msg"), "Los domingos estamos cerrados. Elige de lunes a sábado.");
   if (!db) return msg($("msg"), "El sistema de citas aún no está configurado.");
   const slotId = `${fecha}_${hora.replace(":", "")}`;
   try {
