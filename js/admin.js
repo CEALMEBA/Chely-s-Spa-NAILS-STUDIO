@@ -181,7 +181,8 @@ $("stats").addEventListener("click", (e) => {
 /* ---------- Pintar ---------- */
 function pintar() {
   const h = hoy(), sem = masDias(6);
-  const activas = citas.filter(c => c.estado !== "cancelada");
+  // Solo cuentan las que faltan por atender: las atendidas y canceladas ya no suman.
+  const activas = citas.filter(c => c.estado === "pendiente" || c.estado === "confirmada");
   $("stHoy").textContent = activas.filter(c => c.fecha === h).length;
   $("stPend").textContent = activas.filter(c => c.estado === "pendiente").length;
   $("stConf").textContent = activas.filter(c => c.estado === "confirmada").length;
