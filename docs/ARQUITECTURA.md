@@ -1,0 +1,66 @@
+# Arquitectura — Chely's Spa Nails Studio
+
+Sitio de citas sin servidor propio: páginas estáticas en GitHub Pages + Firebase (Authentication y Firestore) en el plan gratuito.
+
+```
+ Clienta (celular / PC)                     Administradora (celular / PC)
+        │                                              │
+        ▼                                              ▼
+  index.html + js/app.js                      admin.html + js/admin.js
+        │  (sin sesión)                                │  (login Google o correo/contraseña)
+        └───────────────┬──────────────────────────────┘
+                        ▼
+             Firebase (proyecto chelys-spa)
+             ├─ Authentication  → identifica a las administradoras
+             └─ Firestore       → colecciones `appointments` y `slots`
+                  protegido por firestore.rules (es la verdadera barrera de seguridad)
+
+  Hosting: GitHub Pages, rama `main`, carpeta raíz (se publica solo al hacer push).
+```
+
+## Archivos
+
+| Archivo | Función |
+|---|---|
+| `index.html` | Página pública: servicios, formulario de cita, horario, contacto. |
+| `js/app.js` | Lógica pública: arma el catálogo, calcula horarios libres, reserva la cita, muestra el aviso de éxito. |
+| `js/catalogo.js` | Catálogo de servicios, colores e íconos (fuente única para la página y el panel). |
+| `admin.html` | Panel de administración. |
+| `js/admin.js` | Login, lista de citas en tiempo real, confirmar / cancelar / marcar atendida, mensajes de WhatsApp, enlace a Google Calendar. |
+| `js/firebase-config.js` | Configuración pública de Firebase, correos admin (solo para mostrar el panel) y número del negocio. |
+| `firestore.rules` | Reglas de seguridad de la base de datos. Se pegan en Firebase Console → Firestore → Reglas. |
+| `css/style.css` | Estilos de ambas páginas (adaptativo a celular). |
+| `img/` | Logo (flor). |
+| `MANUAL.md`, `README.md` | Manual de usuario e instrucciones de instalación. |
+
+## Datos (Firestore)
+
+**`appointments/{id}`** — la cita completa (datos personales). Solo las administradoras la leen.
+`nombre, telefono, servicio, notas, fecha, hora, slotId, estado, creada`
+Estados: `pendiente → confirmada → atendida`, o `cancelada`.
+
+**`slots/{fecha_HHMM}`** — marca de hora ocupada, sin datos personales: `fecha, hora`.
+El id es fijo (p. ej. `2026-11-20_1000`), así dos clientas no pueden reservar la misma hora: el segundo intento falla.
+
+## Flujos
+
+1. **Reservar (clienta):** elige servicio y día → `app.js` lee `slots` de ese día y ofrece solo las horas libres → al enviar, un `writeBatch` crea el `slot` y la `appointment` a la vez (todo o nada) → aparece la ventana de éxito.
+2. **Atender (administradora):** inicia sesión → `admin.js` escucha `appointments` en tiempo real → "Confirmar" abre WhatsApp con el mensaje listo y marca la cita confirmada; "Cancelar" libera el `slot`; "Atendida" cierra el servicio.
+3. **Recordatorio:** botón "Recordar" (WhatsApp) y botón de Google Calendar con el evento prellenado.
+
+## Reglas de negocio
+
+- Atención de lunes a sábado, 10:00 a 18:00 (última cita), una cita por hora. Domingo cerrado.
+- No se agendan fechas pasadas ni horas de hoy que ya pasaron. Un aviso visible explica por qué una fecha u hora no está disponible.
+- Los mensajes de WhatsApp se abren con `https://api.whatsapp.com/send?phone=52…&text=…` (así los emojis llegan bien en WhatsApp Web, escritorio y celular).
+
+## Despliegue
+
+`git push` a `main` → GitHub Pages compila y publica en 1–2 minutos
+(`https://cealmeba.github.io/Chely-s-Spa-NAILS-STUDIO/`). Los scripts llevan `?v=AAAAMMDDx` para evitar archivos viejos en caché: al cambiar un `.js` o `.css`, sube ese número en el HTML.
+
+## Límites y vida útil (planes gratuitos)
+
+- GitHub Pages: sin vencimiento; 100 GB de tráfico al mes.
+- Firebase Spark: 1 GB de datos, ~50 000 lecturas y 20 000 escrituras por día. Suficiente para años de uso de un negocio local.
+- Mantenimiento recomendado: exportar o borrar citas antiguas periódicamente.
