@@ -178,38 +178,45 @@ $("stats").addEventListener("click", (e) => {
   pintar();
 });
 
-/* ---------- Borrar citas atendidas (con confirmación) ---------- */
+/* ---------- Borrar citas atendidas o canceladas (con confirmación) ---------- */
 let borrando = false;
-const atendidas = () => citas.filter(c => c.estado === "atendida");
+const NOMBRE = { atendida: ["atendida", "atendidas"], cancelada: ["cancelada", "canceladas"] };
+const paraBorrar = () => citas.filter(c => c.estado === estado);
+const limpiable = () => estado === "atendida" || estado === "cancelada";
 function pintarLimpiar(confirmando = false) {
-  const n = atendidas().length;
-  $("limpiar").hidden = estado !== "atendida" || !n;
-  if (!confirmando) { $("limpiarNo").hidden = true; $("limpiarBtn").textContent = "Borrar atendidas"; $("limpiarBtn").className = "act danger"; }
+  const n = limpiable() ? paraBorrar().length : 0;
+  const [uno, varios] = NOMBRE[estado] || ["", ""];
+  const t = (k) => (k === 1 ? uno : varios);
+  $("limpiar").hidden = !n;
+  if (!n) return;
+  if (!confirmando) { $("limpiarNo").hidden = true; $("limpiarBtn").textContent = "Borrar " + varios; }
   $("limpiarTxt").textContent = confirmando
-    ? `¿Seguro? Se borrarán ${n} cita${n === 1 ? "" : "s"} atendida${n === 1 ? "" : "s"} para siempre. No se puede deshacer.`
-    : `Hay ${n} cita${n === 1 ? "" : "s"} atendida${n === 1 ? "" : "s"}. Puedes borrarlas para limpiar la lista.`;
+    ? `¿Seguro? Se borrarán ${n} cita${n === 1 ? "" : "s"} ${t(n)} para siempre. No se puede deshacer.`
+    : `Hay ${n} cita${n === 1 ? "" : "s"} ${t(n)}. Puedes borrarlas para limpiar la lista.`;
 }
 $("limpiarBtn").addEventListener("click", async () => {
   if ($("limpiarNo").hidden) {                       // primer clic: pedir confirmación
     $("limpiarNo").hidden = false; $("limpiarBtn").textContent = "Sí, borrar"; return pintarLimpiar(true);
   }
-  if (borrando) return;
+  if (borrando || !limpiable()) return;
   borrando = true; $("limpiarBtn").disabled = true;
+  const lista = paraBorrar(), tipo = estado;
   try {
-    const lista = atendidas();
     for (let i = 0; i < lista.length; i += 200) {     // lotes (máx. 500 operaciones por lote)
       const b = writeBatch(db);
       lista.slice(i, i + 200).forEach(c => {
         b.delete(doc(db, "appointments", c.id));
-        if (c.slotId) b.delete(doc(db, "slots", c.slotId));
+        // Solo las atendidas liberan su horario. En las canceladas el horario ya se liberó al cancelar
+        // y puede estar tomado por otra cita: no se debe tocar.
+        if (tipo === "atendida" && c.slotId) b.delete(doc(db, "slots", c.slotId));
       });
       await b.commit();
     }
-    toast(`Se borraron ${lista.length} cita${lista.length === 1 ? "" : "s"} atendida${lista.length === 1 ? "" : "s"}`);
+    toast(`Se borraron ${lista.length} cita${lista.length === 1 ? "" : "s"} ${NOMBRE[tipo][lista.length === 1 ? 0 : 1]}`);
   } catch (err) {
     console.error(err); toast("No se pudo borrar (" + (err.code || "error") + ")");
   }
-  borrando = false; $("limpiarBtn").disabled = false; pintarLimpiar();
+  borrando = false; $("limpiarBtn").disabled = false; $("limpiarNo").hidden = true; pintarLimpiar();
 });
 $("limpiarNo").addEventListener("click", () => pintarLimpiar());
 
