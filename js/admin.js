@@ -178,8 +178,44 @@ $("stats").addEventListener("click", (e) => {
   pintar();
 });
 
+/* ---------- Borrar citas atendidas (con confirmación) ---------- */
+let borrando = false;
+const atendidas = () => citas.filter(c => c.estado === "atendida");
+function pintarLimpiar(confirmando = false) {
+  const n = atendidas().length;
+  $("limpiar").hidden = estado !== "atendida" || !n;
+  if (!confirmando) { $("limpiarNo").hidden = true; $("limpiarBtn").textContent = "Borrar atendidas"; $("limpiarBtn").className = "act danger"; }
+  $("limpiarTxt").textContent = confirmando
+    ? `¿Seguro? Se borrarán ${n} cita${n === 1 ? "" : "s"} atendida${n === 1 ? "" : "s"} para siempre. No se puede deshacer.`
+    : `Hay ${n} cita${n === 1 ? "" : "s"} atendida${n === 1 ? "" : "s"}. Puedes borrarlas para limpiar la lista.`;
+}
+$("limpiarBtn").addEventListener("click", async () => {
+  if ($("limpiarNo").hidden) {                       // primer clic: pedir confirmación
+    $("limpiarNo").hidden = false; $("limpiarBtn").textContent = "Sí, borrar"; return pintarLimpiar(true);
+  }
+  if (borrando) return;
+  borrando = true; $("limpiarBtn").disabled = true;
+  try {
+    const lista = atendidas();
+    for (let i = 0; i < lista.length; i += 200) {     // lotes (máx. 500 operaciones por lote)
+      const b = writeBatch(db);
+      lista.slice(i, i + 200).forEach(c => {
+        b.delete(doc(db, "appointments", c.id));
+        if (c.slotId) b.delete(doc(db, "slots", c.slotId));
+      });
+      await b.commit();
+    }
+    toast(`Se borraron ${lista.length} cita${lista.length === 1 ? "" : "s"} atendida${lista.length === 1 ? "" : "s"}`);
+  } catch (err) {
+    console.error(err); toast("No se pudo borrar (" + (err.code || "error") + ")");
+  }
+  borrando = false; $("limpiarBtn").disabled = false; pintarLimpiar();
+});
+$("limpiarNo").addEventListener("click", () => pintarLimpiar());
+
 /* ---------- Pintar ---------- */
 function pintar() {
+  pintarLimpiar();
   const h = hoy(), sem = masDias(6);
   // Solo cuentan las que faltan por atender: las atendidas y canceladas ya no suman.
   const activas = citas.filter(c => c.estado === "pendiente" || c.estado === "confirmada");
