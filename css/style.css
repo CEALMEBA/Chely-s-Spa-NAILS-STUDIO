@@ -32,7 +32,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid #c9a45c88;border-color
 .link{background:none;border:0;color:#666;text-decoration:underline;cursor:pointer;margin-top:8px}
 .msg{min-height:1.2em;font-size:.9rem;color:var(--red);margin:0}
 .msg.ok{color:var(--green)}
-.cita{background:#fff;border-left:5px solid var(--red);border-radius:10px;padding:12px;margin:10px 0;box-shadow:0 1px 4px #0001;display:grid;gap:6px}
+.cita{background:#fff;border-left:5px solid var(--t,var(--red));border-radius:10px;padding:12px;margin:10px 0;box-shadow:0 1px 4px #0001;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start}
+.cita .ci{width:48px;height:48px;border-radius:14px;background:var(--c,var(--rose));color:var(--t,var(--wine));display:grid;place-items:center}
+.cita .ci svg{width:28px;height:28px}
+.cita .info{display:grid;gap:4px;min-width:0}
+.cita .srv{color:var(--t,var(--wine));font-weight:600}
+.cita.cancelada{opacity:.6}
+.cita.hoy{box-shadow:0 0 0 2px var(--gold),0 1px 4px #0001}
+.badge.hoy{background:var(--gold);color:#fff}
+.btn.cal{background:#1a73e8}
 .cita .acts{display:flex;gap:8px;flex-wrap:wrap}
 .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.78rem;font-weight:700;background:#eee}
 .badge.confirmada{background:#d4f5dc;color:#116b2a}
