@@ -49,13 +49,14 @@ Arriba hay cuatro recuadros de resumen (puedes tocarlos para filtrar):
 
 ### Buscar y filtrar
 - **Todas / Hoy / Mañana / 7 días**: elige qué días ver.
-- **Activas / Pendientes / Confirmadas / Canceladas**: elige el estado. "Activas" muestra todo menos lo cancelado.
+- **Activas / Pendientes / Confirmadas / Atendidas / Canceladas**: elige el estado. "Activas" muestra las pendientes y confirmadas.
 - **Buscar**: escribe el nombre, teléfono o servicio de la clienta.
 - **Desde**: la fecha a partir de la cual se cargan citas (por defecto, hoy). Cámbiala para ver días anteriores.
 
 Las citas se agrupan por día y se ordenan por hora. Cada una muestra hora, estado, ícono del servicio, nombre, servicio, teléfono y notas. Los estados son:
 - **pendiente**: la clienta la pidió y falta confirmarla.
 - **confirmada**: ya se le confirmó.
+- **atendida**: la clienta ya recibió su servicio.
 - **cancelada**: se canceló y la hora quedó libre otra vez.
 
 ### Confirmar una cita (pendiente)
@@ -79,6 +80,9 @@ Ambos mensajes son profesionales e incluyen: nombre del negocio, saludo, servici
 | Dolores | 🩺 |
 
 Los textos están en `js/admin.js` (sección "Mensajes de WhatsApp").
+
+### Marcar un servicio como atendido
+Cuando la clienta ya vino y terminaste, pulsa **Atendida** (botón azul). La cita queda en estado **atendida**, sale de la lista de "Activas" y se ve en el filtro **Atendidas**. Si lo pulsaste por error, toca **Deshacer** y vuelve a confirmada.
 
 ### Agregar la cita a tu calendario
 Pulsa **Calendario**. Se abre Google Calendar con el evento listo (1 hora, con nombre, servicio, WhatsApp y notas). Guárdalo y Google te avisará antes de la cita.

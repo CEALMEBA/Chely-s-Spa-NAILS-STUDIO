@@ -225,3 +225,10 @@ dialog.exito::backdrop{background:#3a0a16a6;backdrop-filter:blur(3px)}
 .ok-wa{display:flex;gap:10px;align-items:center;text-align:left;font-size:.9rem;background:#e9f7ee;color:#1f5130;border-radius:14px;padding:10px 12px}
 .ok-wa svg{flex:none;width:26px;height:26px;color:#25a244}
 .exito .btn{width:100%}
+
+/* ---------- Servicio atendido ---------- */
+.badge.atendida{background:#e3e9fb;color:#2a3f8f}
+.act.done{background:#2a3f8f;color:#fff}
+.cita2.atendida{opacity:.8;border-left-color:#2a3f8f}
+.hecho{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;color:#2a3f8f}
+.hecho svg{width:16px;height:16px}

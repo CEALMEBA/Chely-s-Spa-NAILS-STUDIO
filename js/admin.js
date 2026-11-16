@@ -84,6 +84,7 @@ const mensajeWa = (c, tipo) => {
 const SVG = {
   wa: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.2c0-.1-.2-.2-.5-.3Z"/></svg>`,
   cal: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>`,
+  ok: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
   x: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>`
 };
 
@@ -150,7 +151,7 @@ const enRango = (c) => {
   if (rango === "semana") return c.fecha >= h && c.fecha <= masDias(6);
   return true;
 };
-const enEstado = (c) => estado === "activas" ? c.estado !== "cancelada" : c.estado === estado;
+const enEstado = (c) => estado === "activas" ? !["cancelada", "atendida"].includes(c.estado) : c.estado === estado;
 const coincide = (c) => {
   const t = $("buscar").value.trim().toLowerCase();
   return !t || [c.nombre, c.telefono, c.servicio, c.notas].some(v => String(v || "").toLowerCase().includes(t));
@@ -215,7 +216,7 @@ function tarjeta(c) {
     : c.estado === "confirmada"
     ? `<a class="act wa" target="_blank" rel="noopener" href="${waLink(tel, mensajeWa(c, "recordar"))}">${SVG.wa}Recordar</a>`
     : "";
-  const activa = c.estado !== "cancelada";
+  const activa = c.estado === "pendiente" || c.estado === "confirmada";
   return `<article class="cita2 ${esc(c.estado)}" style="${estilo}" data-id="${c.id}">
     <div class="hora"><b>${esc(c.hora)}</b><span class="badge ${esc(c.estado)}">${esc(c.estado)}</span></div>
     <div class="ci">${ico}</div>
@@ -227,6 +228,7 @@ function tarjeta(c) {
     </div>
     ${activa ? `<div class="acts2">
       ${wa}
+      <button class="act done" data-done="${c.id}" title="Marcar el servicio como atendido">${SVG.ok}Atendida</button>
       <a class="act cal" target="_blank" rel="noopener" href="${calLink(c)}" title="Agregar a mi calendario">${SVG.cal}Calendario</a>
       <button class="act ghost" data-ask="${c.id}" title="Cancelar cita">${SVG.x}Cancelar</button>
     </div>
@@ -234,19 +236,30 @@ function tarjeta(c) {
       <span>¿Cancelar la cita de ${esc(c.nombre)}? La hora quedará libre.</span>
       <button class="act danger" data-cancel="${c.id}" data-slot="${esc(c.slotId)}">Sí, cancelar</button>
       <button class="act ghost" data-no>No</button>
+    </div>` : c.estado === "atendida" ? `<div class="acts2">
+      <span class="hecho">${SVG.ok}Servicio atendido</span>
+      <button class="act ghost" data-undo="${c.id}" title="Volver a confirmada">Deshacer</button>
     </div>` : ""}
   </article>`;
 }
 
 /* ---------- Acciones ---------- */
 $("adminCitas").addEventListener("click", async (e) => {
-  const t = e.target.closest("[data-conf],[data-ask],[data-cancel],[data-no]");
+  const t = e.target.closest("[data-conf],[data-done],[data-undo],[data-ask],[data-cancel],[data-no]");
   if (!t) return;
   const card = t.closest(".cita2");
   try {
     if (t.dataset.conf) {
       await updateDoc(doc(db, "appointments", t.dataset.conf), { estado: "confirmada" });
       toast("Cita confirmada");
+    } else if (t.dataset.done) {
+      t.disabled = true;
+      await updateDoc(doc(db, "appointments", t.dataset.done), { estado: "atendida" });
+      toast("Servicio atendido ✓");
+    } else if (t.dataset.undo) {
+      t.disabled = true;
+      await updateDoc(doc(db, "appointments", t.dataset.undo), { estado: "confirmada" });
+      toast("La cita volvió a confirmada");
     } else if (t.dataset.ask) {
       card.querySelector(".acts2").hidden = true; card.querySelector(".ask").hidden = false;
     } else if ("no" in t.dataset) {

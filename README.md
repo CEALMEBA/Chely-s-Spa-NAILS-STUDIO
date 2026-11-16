@@ -20,7 +20,7 @@ Repo nuevo → sube todo → Settings → Pages → Branch `main` / root.
 - No subas contraseñas, ni archivos con datos de clientes.
 
 ## Uso de la administradora
-Al iniciar sesión ve el panel en vivo: resumen del día, filtros por fecha y estado, búsqueda y las citas agrupadas por día. Cada cita tiene botones para **Confirmar** o **Recordar** por WhatsApp (mensaje profesional con emoji según el servicio y el aviso de no olvidar asistir), **Calendario** (Google Calendar) y **Cancelar** (libera la hora).
+Al iniciar sesión ve el panel en vivo: resumen del día, filtros por fecha y estado, búsqueda y las citas agrupadas por día. Cada cita tiene botones para **Confirmar** o **Recordar** por WhatsApp (mensaje profesional con emoji según el servicio y el aviso de no olvidar asistir), **Atendida** (marca el servicio como realizado), **Calendario** (Google Calendar) y **Cancelar** (libera la hora).
 
 Guía completa: [MANUAL.md](MANUAL.md).
 
