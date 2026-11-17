@@ -47,6 +47,14 @@ Arriba hay cuatro recuadros de resumen (puedes tocarlos para filtrar):
 - **Confirmadas**
 - **Próximos 7 días**
 
+### Alertas de citas nuevas y confirmaciones
+Pulsa **🔔 Activar alertas** (junto a "En vivo") y acepta las notificaciones del navegador. Desde ese momento, con el panel abierto (aunque sea en otra pestaña o minimizado), suena un aviso y sale una notificación cuando:
+- **Llega una cita nueva** (timbre).
+- **Una clienta confirma** desde su enlace (sonido que sube).
+- **Una clienta cancela** (sonido que baja).
+
+Con la pestaña en segundo plano, el título parpadea con el número de avisos. Si el celular se bloquea o cierras el panel, no llegan alertas: déjalo abierto. Se desactivan pulsando el mismo botón. En iPhone, el sonido y las notificaciones solo funcionan si agregas el panel a la pantalla de inicio.
+
 ### Buscar y filtrar
 - **Todas / Hoy / Mañana / 7 días**: elige qué días ver.
 - **Activas / Pendientes / Confirmadas / Atendidas / Canceladas**: elige el estado. "Activas" muestra las pendientes y confirmadas.

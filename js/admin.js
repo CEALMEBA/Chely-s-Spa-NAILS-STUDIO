@@ -44,6 +44,68 @@ const calLink = (c) => {
   return "https://calendar.google.com/calendar/render?" + p;
 };
 
+/* ---------- Alertas: sonido, notificación y título de la pestaña ---------- */
+// Funcionan mientras el panel esté abierto (aunque sea en otra pestaña o minimizado).
+// Con el panel cerrado no llega nada: eso requeriría notificaciones push con servidor (plan de pago de Firebase).
+const TITULO = document.title;
+let alertasOn = false, pendientesAviso = 0, audioCtx = null, parpadeo = null;
+try { alertasOn = localStorage.getItem("alertasAdmin") === "1"; } catch { /* sin almacenamiento */ }
+
+function pintarBtnAlertas() {
+  const b = $("btnAlertas");
+  const bloqueado = "Notification" in window && Notification.permission === "denied";
+  b.className = "alert-btn" + (alertasOn ? " on" : "");
+  b.textContent = alertasOn ? "🔔 Alertas activas" : bloqueado ? "🔕 Alertas bloqueadas" : "🔔 Activar alertas";
+  b.title = bloqueado ? "El navegador bloqueó las notificaciones: actívalas en el candado junto a la dirección. El sonido sí funciona."
+    : "Sonido y avisos cuando llegue o se confirme una cita";
+}
+const tono = (ctx, f, t0, dur) => {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = "sine"; o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.start(t0); o.stop(t0 + dur + 0.02);
+};
+function sonido(tipo) {
+  try {
+    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const t = audioCtx.currentTime;
+    const notas = tipo === "cancelo" ? [[523, 0, .18], [392, .2, .3]]          // baja: canceló
+      : tipo === "confirmo" ? [[659, 0, .14], [880, .16, .14], [1175, .32, .28]] // sube: confirmó
+      : [[880, 0, .18], [1175, .22, .18], [880, .5, .18], [1175, .72, .3]];        // timbre: cita nueva
+    notas.forEach(([f, d, l]) => tono(audioCtx, f, t + d, l));
+  } catch { /* sin audio */ }
+}
+function alerta(tipo, titulo, cuerpo) {
+  if (!alertasOn) return;
+  sonido(tipo);
+  try { navigator.vibrate?.([200, 100, 200]); } catch { /* sin vibración */ }
+  if (document.hidden) {
+    pendientesAviso++;
+    clearInterval(parpadeo);
+    let v = false;
+    parpadeo = setInterval(() => { document.title = (v = !v) ? `(${pendientesAviso}) ${titulo}` : TITULO; }, 1000);
+    if ("Notification" in window && Notification.permission === "granted") {
+      try { new Notification(titulo + " · Chely's Spa", { body: cuerpo, icon: "img/logo-flor.png", tag: "chelys-" + tipo }); } catch { /* móvil sin permiso de página */ }
+    }
+  }
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) return;
+  pendientesAviso = 0; clearInterval(parpadeo); document.title = TITULO;
+});
+$("btnAlertas").addEventListener("click", async () => {
+  if (alertasOn) { alertasOn = false; } else {
+    alertasOn = true;
+    sonido("confirmo");                                   // el clic desbloquea el audio y sirve de prueba
+    if ("Notification" in window && Notification.permission === "default") { try { await Notification.requestPermission(); } catch { /* ignorar */ } }
+    toast("Alertas activadas");
+  }
+  try { localStorage.setItem("alertasAdmin", alertasOn ? "1" : "0"); } catch { /* ignorar */ }
+  pintarBtnAlertas();
+});
+pintarBtnAlertas();
+
 /* ---------- Mensajes de WhatsApp ---------- */
 // Emoji y frase según la categoría del servicio (primera palabra de la categoría en catalogo.js).
 const ESTILO_WA = {
@@ -145,12 +207,22 @@ function escuchar() {
     const nuevas = snap.docChanges().filter(ch => ch.type === "added").length;
     citas = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora));
-    if (!primera && nuevas) toast(nuevas === 1 ? "Llegó una cita nueva" : `Llegaron ${nuevas} citas nuevas`);
+    if (!primera && nuevas) {
+      toast(nuevas === 1 ? "Llegó una cita nueva" : `Llegaron ${nuevas} citas nuevas`);
+      const n = snap.docChanges().find(ch => ch.type === "added").doc.data();
+      alerta("nueva", nuevas === 1 ? "Cita nueva" : `${nuevas} citas nuevas`,
+        nuevas === 1 ? `${n.nombre} · ${fmtFecha(n.fecha)} ${n.hora}` : "Revisa el panel");
+    }
     // Aviso cuando una clienta confirma o cancela desde su enlace.
     if (!primera) snap.docChanges().forEach(ch => {
       const d = ch.doc.data();
       if (ch.type === "modified" && d.respuesta && respuestas.get(ch.doc.id) !== d.respuesta)
-        toast(`${d.nombre} ${d.respuesta === "cancelo" ? "canceló" : "confirmó"} su cita`);
+      {
+        const cancelo = d.respuesta === "cancelo";
+        toast(`${d.nombre} ${cancelo ? "canceló" : "confirmó"} su cita`);
+        alerta(cancelo ? "cancelo" : "confirmo", cancelo ? "Cita cancelada" : "Cita confirmada",
+          `${d.nombre} · ${fmtFecha(d.fecha)} ${d.hora}`);
+      }
     });
     respuestas = new Map(citas.map(c => [c.id, c.respuesta]));
     citas.forEach(liberarSiCancelo);
