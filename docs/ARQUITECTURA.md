@@ -25,6 +25,7 @@ Sitio de citas sin servidor propio: páginas estáticas en GitHub Pages + Fireba
 | `index.html` | Página pública: servicios, formulario de cita, horario, contacto. |
 | `js/app.js` | Lógica pública: arma el catálogo, calcula horarios libres, reserva la cita, muestra el aviso de éxito. |
 | `js/catalogo.js` | Catálogo de servicios, colores e íconos (fuente única para la página y el panel). |
+| `cita.html`, `js/cita.js` | Página de la clienta para confirmar o cancelar su cita. Se abre con el enlace del WhatsApp: `cita.html?id=<id>&a=confirmar/cancelar`. |
 | `admin.html` | Panel de administración. |
 | `js/admin.js` | Login, lista de citas en tiempo real, confirmar / cancelar / marcar atendida, mensajes de WhatsApp, enlace a Google Calendar. |
 | `js/firebase-config.js` | Configuración pública de Firebase, correos admin (solo para mostrar el panel) y número del negocio. |
@@ -35,8 +36,8 @@ Sitio de citas sin servidor propio: páginas estáticas en GitHub Pages + Fireba
 
 ## Datos (Firestore)
 
-**`appointments/{id}`** — la cita completa (datos personales). Solo las administradoras la leen.
-`nombre, telefono, servicio, notas, fecha, hora, slotId, estado, creada`
+**`appointments/{id}`** — la cita completa (datos personales). Solo las administradoras ven la lista; una cita suelta se abre con su id (el enlace de la clienta).
+`nombre, telefono, servicio, notas, fecha, hora, slotId, estado, creada` y, después: `avisada` (ya se le envió el mensaje), `respuesta` (`confirmo` / `cancelo`, lo que tocó la clienta), `slotLibre` (el panel ya liberó la hora de una cita que canceló la clienta).
 Estados: `pendiente → confirmada → atendida`, o `cancelada`.
 
 **`slots/{fecha_HHMM}`** — marca de hora ocupada, sin datos personales: `fecha, hora`.
@@ -45,7 +46,7 @@ El id es fijo (p. ej. `2026-11-20_1000`), así dos clientas no pueden reservar l
 ## Flujos
 
 1. **Reservar (clienta):** elige servicio y día → `app.js` lee `slots` de ese día y ofrece solo las horas libres → al enviar, un `writeBatch` crea el `slot` y la `appointment` a la vez (todo o nada) → aparece la ventana de éxito.
-2. **Atender (administradora):** inicia sesión → `admin.js` escucha `appointments` en tiempo real → "Confirmar" abre WhatsApp con el mensaje listo y marca la cita confirmada; "Cancelar" libera el `slot`; "Atendida" cierra el servicio.
+2. **Atender (administradora):** inicia sesión → `admin.js` escucha `appointments` en tiempo real → "Pedir confirmación" abre WhatsApp con el mensaje y los enlaces Confirmar / Cancelar → la clienta abre `cita.html` y toca un botón → la cita cambia a confirmada o cancelada (si cancela, el panel libera el `slot` en una transacción); "Cancelar" libera el `slot`; "Atendida" cierra el servicio.
 3. **Recordatorio:** botón "Recordar" (WhatsApp) y botón de Google Calendar con el evento prellenado.
 
 ## Reglas de negocio

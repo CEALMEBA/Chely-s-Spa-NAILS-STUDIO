@@ -9,14 +9,28 @@ service cloud.firestore {
         && request.auth.token.email in ['cesamendoza19@gmail.com', 'araceltruji1984@gmail.com'];
     }
 
-    // Citas: cualquiera puede crear una (sin cuenta) pero NADIE puede leerlas salvo la admin.
+    // La clienta responde desde el enlace que recibe por WhatsApp (cita.html?id=...).
+    // Solo puede confirmar o cancelar una cita que siga activa, y solo toca 'estado' y 'respuesta'.
+    function clientaResponde() {
+      let nueva = request.resource.data;
+      return resource.data.estado in ['pendiente', 'confirmada']
+        && nueva.diff(resource.data).affectedKeys().hasOnly(['estado', 'respuesta'])
+        && ((nueva.estado == 'confirmada' && nueva.respuesta == 'confirmo')
+         || (nueva.estado == 'cancelada' && nueva.respuesta == 'cancelo'));
+    }
+
+    // Citas: cualquiera puede crear una (sin cuenta). La lista solo la ve la admin.
+    // Una cita suelta se puede abrir con su id (20 caracteres al azar, imposible de adivinar):
+    // ese id solo viaja en el enlace que la admin manda por WhatsApp a la clienta.
     match /appointments/{id} {
-      allow read: if isAdmin();
+      allow get: if true;
+      allow list: if isAdmin();
       allow create: if request.resource.data.estado == 'pendiente'
         && request.resource.data.nombre is string && request.resource.data.nombre.size() > 0 && request.resource.data.nombre.size() <= 60
         && request.resource.data.telefono.matches('^[0-9]{10}$')
         && request.resource.data.keys().hasOnly(['nombre','telefono','servicio','notas','fecha','hora','slotId','estado','creada']);
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin() || clientaResponde();
+      allow delete: if isAdmin();
     }
 
     // Horarios ocupados: solo fecha/hora, sin datos personales. Un horario no se puede reservar dos veces

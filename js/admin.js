@@ -4,7 +4,7 @@ import {
   signInWithEmailAndPassword, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, collection, doc, writeBatch, query, where, orderBy, onSnapshot, updateDoc
+  getFirestore, collection, doc, writeBatch, query, where, orderBy, onSnapshot, updateDoc, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js?v=20261116";
 import { ICONOS, categoriaDe } from "./catalogo.js?v=20261116";
@@ -56,12 +56,21 @@ const ESTILO_WA = {
 };
 const estiloWa = (servicio) => ESTILO_WA[String(servicio || "").split(" - ")[0]] || { e: "🌸", f: "💖 Será un gusto atenderte." };
 
+// Enlace a la página donde la clienta confirma o cancela (cita.html). WhatsApp no permite botones
+// reales en mensajes enviados por enlace, así que van como enlaces que abren los botones.
+const enlaceCita = (c, a) => new URL(`cita.html?id=${c.id}&a=${a}`, location.href).href;
+
+// tipo "pedir": cita pendiente, se le pide a la clienta confirmar o cancelar.
+// tipo "recordar": cita ya confirmada, recordatorio con enlace para cancelar.
 const mensajeWa = (c, tipo) => {
   const { e, f } = estiloWa(c.servicio);
   const srv = String(c.servicio || "").split(" - ").pop();
-  const encabezado = tipo === "confirmar"
-    ? `¡Hola, ${c.nombre}! 🌸\nTu cita ha sido *confirmada* ✅`
+  const encabezado = tipo === "pedir"
+    ? `¡Hola, ${c.nombre}! 🌸\nRecibimos tu solicitud de cita. Por favor *confírmala* con el enlace de abajo 👇`
     : `¡Hola, ${c.nombre}! 🌸\n🔔 Te recordamos tu próxima cita con nosotras.`;
+  const enlaces = tipo === "pedir"
+    ? [`✅ *Confirmar cita:*`, enlaceCita(c, "confirmar"), ``, `❌ *Cancelar cita:*`, enlaceCita(c, "cancelar")]
+    : [`❌ ¿No podrás asistir? *Cancela tu cita* aquí:`, enlaceCita(c, "cancelar")];
   return [
     `✨ *Chely's Spa Nails Studio* ✨`,
     ``,
@@ -71,6 +80,8 @@ const mensajeWa = (c, tipo) => {
     `📅 *Fecha:* ${fmtFecha(c.fecha)}`,
     `🕐 *Hora:* ${c.hora}`,
     `📍 *Dirección:* Av. 7 Poniente No. 303, Col. Centro`,
+    ``,
+    ...enlaces,
     ``,
     f,
     ``,
@@ -93,6 +104,8 @@ let citas = [];           // todas las citas desde "adminDesde"
 let rango = "todo";       // todo | hoy | manana | semana
 let estado = "activas";   // activas | pendiente | confirmada | cancelada
 let unsub = null;
+let respuestas = new Map(); // id → última respuesta vista de la clienta (para avisar solo una vez)
+const liberando = new Set();
 
 /* ---------- Login ---------- */
 $("adminDesde").value = hoy();
@@ -132,6 +145,14 @@ function escuchar() {
     citas = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora));
     if (!primera && nuevas) toast(nuevas === 1 ? "Llegó una cita nueva" : `Llegaron ${nuevas} citas nuevas`);
+    // Aviso cuando una clienta confirma o cancela desde su enlace.
+    if (!primera) snap.docChanges().forEach(ch => {
+      const d = ch.doc.data();
+      if (ch.type === "modified" && d.respuesta && respuestas.get(ch.doc.id) !== d.respuesta)
+        toast(`${d.nombre} ${d.respuesta === "cancelo" ? "canceló" : "confirmó"} su cita`);
+    });
+    respuestas = new Map(citas.map(c => [c.id, c.respuesta]));
+    citas.forEach(liberarSiCancelo);
     primera = false;
     $("admLive").classList.remove("off");
     pintar();
@@ -142,6 +163,24 @@ function escuchar() {
   });
 }
 $("adminDesde").addEventListener("change", escuchar);
+
+// La clienta no puede borrar el horario (las reglas no la dejan): cuando cancela desde su enlace,
+// el panel libera la hora. En transacción, para que no se libere dos veces si hay dos paneles abiertos
+// (la segunda vez podría borrar el horario de una cita nueva).
+async function liberarSiCancelo(c) {
+  if (c.estado !== "cancelada" || c.respuesta !== "cancelo" || c.slotLibre || liberando.has(c.id)) return;
+  liberando.add(c.id);
+  try {
+    await runTransaction(db, async (tx) => {
+      const r = doc(db, "appointments", c.id);
+      const s = await tx.get(r);
+      if (!s.exists() || s.data().slotLibre || s.data().respuesta !== "cancelo") return;
+      if (c.slotId) tx.delete(doc(db, "slots", c.slotId));
+      tx.update(r, { slotLibre: true });
+    });
+  } catch (e) { console.error(e); }
+  liberando.delete(c.id);
+}
 
 /* ---------- Filtros ---------- */
 const enRango = (c) => {
@@ -208,7 +247,9 @@ $("limpiarBtn").addEventListener("click", async () => {
         b.delete(doc(db, "appointments", c.id));
         // Solo las atendidas liberan su horario. En las canceladas el horario ya se liberó al cancelar
         // y puede estar tomado por otra cita: no se debe tocar.
-        if (tipo === "atendida" && c.slotId) b.delete(doc(db, "slots", c.slotId));
+        // (Salvo que la haya cancelado la clienta y su horario aún no se haya liberado.)
+        const sinLiberar = c.respuesta === "cancelo" && !c.slotLibre;
+        if ((tipo === "atendida" || sinLiberar) && c.slotId) b.delete(doc(db, "slots", c.slotId));
       });
       await b.commit();
     }
@@ -254,11 +295,17 @@ function tarjeta(c) {
   const estilo = cat ? `--c:${cat.color};--t:${cat.tx}` : "";
   const [catNombre, srv] = String(c.servicio || "").split(" - ");
   const tel = esc(c.telefono);
-  // Un solo botón de WhatsApp: confirmar si está pendiente, recordar si ya se confirmó.
+  // Un solo botón de WhatsApp: pedir confirmación si está pendiente, recordar si ya se confirmó.
+  // La cita pasa a confirmada cuando la clienta toca "Confirmar cita" en su enlace (o a mano con "Confirmar").
   const wa = c.estado === "pendiente"
-    ? `<a class="act wa" target="_blank" rel="noopener" data-conf="${c.id}" href="${waLink(tel, mensajeWa(c, "confirmar"))}">${SVG.wa}Confirmar</a>`
+    ? `<a class="act wa" target="_blank" rel="noopener" data-aviso="${c.id}" href="${waLink(tel, mensajeWa(c, "pedir"))}" title="Enviar mensaje con los enlaces Confirmar / Cancelar">${SVG.wa}${c.avisada ? "Reenviar" : "Pedir confirmación"}</a>
+       <button class="act conf" data-conf="${c.id}" title="Confirmar sin esperar la respuesta de la clienta">${SVG.ok}Confirmar</button>`
     : c.estado === "confirmada"
     ? `<a class="act wa" target="_blank" rel="noopener" href="${waLink(tel, mensajeWa(c, "recordar"))}">${SVG.wa}Recordar</a>`
+    : "";
+  const tag = c.respuesta === "cancelo" && c.estado === "cancelada" ? `<span class="resp-tag no">Canceló la clienta</span>`
+    : c.respuesta === "confirmo" && c.estado !== "cancelada" ? `<span class="resp-tag si">Confirmó la clienta</span>`
+    : c.estado === "pendiente" && c.avisada ? `<span class="resp-tag">Mensaje enviado · esperando respuesta</span>`
     : "";
   const activa = c.estado === "pendiente" || c.estado === "confirmada";
   return `<article class="cita2 ${esc(c.estado)}" style="${estilo}" data-id="${c.id}">
@@ -269,6 +316,7 @@ function tarjeta(c) {
       <span class="srv">${esc(srv || catNombre)}<small>${srv ? esc(catNombre) : ""}</small></span>
       <span class="tel">${tel}</span>
       ${c.notas ? `<span class="nota">“${esc(c.notas)}”</span>` : ""}
+      ${tag}
     </div>
     ${activa ? `<div class="acts2">
       ${wa}
@@ -289,11 +337,16 @@ function tarjeta(c) {
 
 /* ---------- Acciones ---------- */
 $("adminCitas").addEventListener("click", async (e) => {
-  const t = e.target.closest("[data-conf],[data-done],[data-undo],[data-ask],[data-cancel],[data-no]");
+  const t = e.target.closest("[data-aviso],[data-conf],[data-done],[data-undo],[data-ask],[data-cancel],[data-no]");
   if (!t) return;
   const card = t.closest(".cita2");
   try {
-    if (t.dataset.conf) {
+    if (t.dataset.aviso) {
+      // El enlace abre WhatsApp; aquí solo se anota que ya se le pidió confirmar. La cita sigue pendiente.
+      await updateDoc(doc(db, "appointments", t.dataset.aviso), { avisada: true });
+      toast("Se confirmará cuando la clienta responda");
+    } else if (t.dataset.conf) {
+      t.disabled = true;
       await updateDoc(doc(db, "appointments", t.dataset.conf), { estado: "confirmada" });
       toast("Cita confirmada");
     } else if (t.dataset.done) {

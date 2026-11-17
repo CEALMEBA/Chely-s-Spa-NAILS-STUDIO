@@ -18,12 +18,12 @@ No hace falta crear cuenta ni iniciar sesión.
    - **Hora**: solo aparecen las horas **libres** de ese día (10:00 a 18:00). Si una hora no aparece, ya está ocupada.
    - **Notas** (opcional): por ejemplo "primera vez" o el diseño que quieres.
 3. Pulsa **Reservar**.
-4. Aparece una ventana con una palomita verde: **"¡Tu cita fue agendada!"**, el resumen (servicio con su ícono, día y hora) y el aviso **"Espera nuestro mensaje de confirmación por WhatsApp"** con su número. Se cierra con **¡Entendido!**
+4. Aparece una ventana con una palomita verde: **"¡Tu cita fue agendada!"**, el resumen (servicio con su ícono, día y hora) y el aviso de que recibirá un WhatsApp con un enlace para confirmar su cita. Se cierra con **¡Entendido!**
 
 Importante:
-- La cita queda como **pendiente** hasta que Chely la confirme por WhatsApp.
+- La cita queda como **pendiente**. Chely le manda un WhatsApp con dos enlaces: **Confirmar cita** y **Cancelar cita**. Al abrir uno ve su cita y los botones; la cita cambia sola en el panel cuando toca uno.
 - Si dos personas intentan la misma hora, solo la primera se guarda. A la segunda le dirá que ese horario ya fue tomado y mostrará las horas que sigan libres.
-- Para cancelar o cambiar una cita, la clienta escribe por WhatsApp al **271 120 6132**.
+- Para cancelar, la clienta usa el enlace **Cancelar cita** de su mensaje. Para cambiarla, escribe por WhatsApp al **271 120 6132**.
 
 ---
 
@@ -55,17 +55,23 @@ Arriba hay cuatro recuadros de resumen (puedes tocarlos para filtrar):
 
 Las citas se agrupan por día y se ordenan por hora. Cada una muestra hora, estado, ícono del servicio, nombre, servicio, teléfono y notas. Los estados son:
 - **pendiente**: la clienta la pidió y falta confirmarla.
-- **confirmada**: ya se le confirmó.
+- **confirmada**: la clienta la confirmó desde su enlace (o Chely la confirmó a mano).
 - **atendida**: la clienta ya recibió su servicio.
 - **cancelada**: se canceló y la hora quedó libre otra vez.
 
 ### Confirmar una cita (pendiente)
-1. Pulsa **Confirmar**. Se abre WhatsApp con el mensaje ya escrito para esa clienta.
-2. Envía el mensaje.
-3. La cita pasa a **confirmada** automáticamente.
+1. Pulsa **Pedir confirmación**. Se abre WhatsApp con el mensaje ya escrito, que incluye los enlaces **Confirmar cita** y **Cancelar cita**.
+2. Envía el mensaje. La tarjeta mostrará "Mensaje enviado · esperando respuesta" y el botón cambia a **Reenviar**.
+3. Cuando la clienta toca **Confirmar cita**, la cita pasa a **confirmada** sola y sale el aviso "… confirmó su cita". Si toca **Cancelar cita**, pasa a **cancelada** y la hora se libera.
+4. Si la clienta te confirmó por otro medio (llamada, mensaje), pulsa **Confirmar** para marcarla a mano.
+
+Notas:
+- WhatsApp no permite botones dentro del mensaje (eso solo existe en la API de paga de WhatsApp Business); por eso van como enlaces que abren una página con los botones.
+- Si la clienta no tiene guardado el número del negocio, WhatsApp puede mostrar los enlaces sin poder tocarlos hasta que responda el mensaje o agregue el contacto.
+- Cuando la clienta cancela, la hora se libera en cuanto el panel esté abierto en algún dispositivo (el panel es quien la libera).
 
 ### Recordar una cita (confirmada)
-Pulsa **Recordar**. Se abre el chat con un recordatorio listo para enviar, sin cambiar el estado.
+Pulsa **Recordar**. Se abre el chat con un recordatorio listo para enviar, sin cambiar el estado. Incluye el enlace **Cancelar cita** por si ya no puede asistir.
 
 ### Cómo son los mensajes de WhatsApp
 Ambos mensajes son profesionales e incluyen: nombre del negocio, saludo, servicio, fecha, hora, dirección, una frase según el servicio, el aviso **"¡No se te olvide asistir!"** y cómo cambiar la cita. El ícono cambia según el servicio:
@@ -112,7 +118,7 @@ Que revise que el WhatsApp tenga 10 dígitos y que haya elegido una hora de la l
 
 - **Código:** https://github.com/CEALMEBA/Chely-s-Spa-NAILS-STUDIO. Cada vez que se sube un cambio a `main`, la página se actualiza en 1 o 2 minutos.
 - **Base de datos y acceso:** proyecto de Firebase `chelys-spa` (Authentication y Firestore).
-- **Reglas de seguridad:** `firestore.rules`. Cualquiera puede crear una cita y ver las horas ocupadas. Solo la administradora puede leer, confirmar o cancelar citas. Al cambiarlas hay que pegarlas también en Firebase → Firestore → Reglas → Publicar.
+- **Reglas de seguridad:** `firestore.rules`. Cualquiera puede crear una cita y ver las horas ocupadas. Solo la administradora ve la lista de citas; la clienta puede abrir, confirmar o cancelar **su** cita con el enlace que recibe (`cita.html?id=…`). Al cambiarlas hay que pegarlas también en Firebase → Firestore → Reglas → Publicar.
 - **Agregar otra administradora:** añadir su correo (Google) o su ID de usuario a las reglas y a `js/firebase-config.js`.
 - **Índice de Firestore:** no hace falta; el panel solo ordena por fecha y la hora se ordena en el navegador.
 - **Versión de archivos (caché):** los enlaces a CSS y JS llevan `?v=AAAAMMDD` (en `index.html`, `admin.html` y en los `import` de `js/admin.js` y `js/app.js`). Al cambiar un archivo, cambia su número (o agrega una letra, p. ej. `20261116b`) donde se cargue, para que los celulares no usen la versión vieja guardada.

@@ -8,12 +8,23 @@ No hay servidor propio: **la seguridad la dan las reglas de Firestore** (`firest
 
 | Colección | Leer | Crear | Editar | Borrar |
 |---|---|---|---|---|
-| `appointments` (datos personales) | Solo administradoras | Cualquiera, con validación | Solo administradoras | Solo administradoras |
+| `appointments` (datos personales) | Lista: solo administradoras. Una cita suelta: quien tenga su id | Cualquiera, con validación | Administradoras; la clienta solo puede confirmar o cancelar con su enlace | Solo administradoras |
 | `slots` (fecha y hora ocupada) | Público | Cualquiera, con validación | Nadie | Solo administradoras |
 | Cualquier otra colección | Nadie | Nadie | Nadie | Nadie |
 
 Una administradora es una cuenta con correo **verificado** incluido en la lista de `firestore.rules`.
 Validación al crear una cita: estado `pendiente`, nombre de 1 a 60 caracteres, teléfono de exactamente 10 dígitos y solo los campos permitidos.
+
+### Enlace de la clienta (confirmar / cancelar)
+
+Desde que la clienta confirma o cancela con un enlace (`cita.html?id=…`), **el id de la cita funciona como llave**: quien tenga el enlace puede ver esa cita (nombre, teléfono, servicio, fecha, hora, notas) y confirmarla o cancelarla. Es un riesgo aceptado, con estos límites:
+
+- El id son 20 caracteres al azar: no se puede adivinar ni listar (la lista sigue siendo solo para administradoras).
+- El enlace solo viaja en el WhatsApp que la administradora manda al número de la clienta.
+- Con el enlace solo se puede pasar una cita activa a `confirmada` o `cancelada` (campos `estado` y `respuesta`); no se puede editar nada más, ni reactivar una cancelada, ni borrar.
+- La clienta no puede borrar el horario: lo libera el panel de la administradora.
+
+**Las pruebas 2 y 6 de abajo son anteriores a este cambio**: ahora leer una cita por id está permitido y editarla se permite solo en la forma descrita. Conviene repetirlas en el simulador de reglas.
 
 ## 2. Pruebas realizadas (contra la base real, sin iniciar sesión)
 

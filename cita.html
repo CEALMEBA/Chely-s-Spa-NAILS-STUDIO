@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#6d0f27">
+<title>Tu cita · Chely's Spa</title>
+<link rel="icon" type="image/png" href="img/logo-flor.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=20261116h">
+</head>
+<body class="adm">
+<header class="adm-top">
+  <a class="adm-brand" href="./">
+    <img src="img/logo-flor-blanco.png" alt="" width="40" height="33">
+    <div><b>Chely's Spa</b><small>Nails Studio</small></div>
+  </a>
+</header>
+
+<main class="resp-main">
+  <div id="rCargando" class="empty"><span class="spin"></span>Buscando tu cita…</div>
+
+  <div id="rCaja" class="card resp" hidden>
+    <div id="rIcono" class="resp-ico" aria-hidden="true"></div>
+    <h2 id="rTitulo"></h2>
+    <p id="rTexto" class="lead"></p>
+    <div id="rResumen" class="ok-resumen" hidden></div>
+
+    <div id="rBotones" class="resp-btns" hidden>
+      <button type="button" class="btn ok" id="rConfirmar">Confirmar cita</button>
+      <button type="button" class="btn no" id="rCancelar">Cancelar cita</button>
+    </div>
+    <div id="rSeguro" class="resp-btns" hidden>
+      <p class="resp-seguro">¿Segura que quieres cancelar tu cita? La hora quedará libre para otra persona.</p>
+      <button type="button" class="btn danger" id="rSiCancelar">Sí, cancelar mi cita</button>
+      <button type="button" class="btn no" id="rNoCancelar">No, conservarla</button>
+    </div>
+
+    <p id="rMsg" class="msg" role="status"></p>
+    <a id="rAgendar" class="btn" href="./#cita" hidden>Agendar otra cita</a>
+    <a id="rWa" class="resp-wa" target="_blank" rel="noopener">¿Dudas o cambios? Escríbenos por WhatsApp</a>
+  </div>
+</main>
+
+<footer><img class="logo-f" src="img/logo-flor.png" alt="" width="56" height="46"><br>© Chely's Spa Nails Studio</footer>
+<script type="module" src="js/cita.js?v=20261116"></script>
+</body>
+</html>
