@@ -58,7 +58,7 @@ const estiloWa = (servicio) => ESTILO_WA[String(servicio || "").split(" - ")[0]]
 
 // Enlace a la página donde la clienta confirma o cancela (cita.html). WhatsApp no permite botones
 // reales en mensajes enviados por enlace, así que van como enlaces que abren los botones.
-const enlaceCita = (c, a) => new URL(`cita.html?id=${c.id}&a=${a}`, location.href).href;
+const enlaceCita = (c) => new URL(`cita.html?${c.id}`, location.href).href;
 
 // tipo "pedir": cita pendiente, se le pide a la clienta confirmar o cancelar.
 // tipo "recordar": cita ya confirmada, recordatorio con enlace para cancelar.
@@ -68,9 +68,10 @@ const mensajeWa = (c, tipo) => {
   const encabezado = tipo === "pedir"
     ? `¡Hola, ${c.nombre}! 🌸\nRecibimos tu solicitud de cita. Por favor *confírmala* con el enlace de abajo 👇`
     : `¡Hola, ${c.nombre}! 🌸\n🔔 Te recordamos tu próxima cita con nosotras.`;
+  // Un solo enlace corto: la página muestra los dos botones (Confirmar cita / Cancelar cita).
   const enlaces = tipo === "pedir"
-    ? [`✅ *Confirmar cita:*`, enlaceCita(c, "confirmar"), ``, `❌ *Cancelar cita:*`, enlaceCita(c, "cancelar")]
-    : [`❌ ¿No podrás asistir? *Cancela tu cita* aquí:`, enlaceCita(c, "cancelar")];
+    ? [`👉 *Confirma o cancela tu cita aquí:*`, enlaceCita(c)]
+    : [`❌ ¿No podrás asistir? *Cancela tu cita aquí:*`, enlaceCita(c)];
   return [
     `✨ *Chely's Spa Nails Studio* ✨`,
     ``,

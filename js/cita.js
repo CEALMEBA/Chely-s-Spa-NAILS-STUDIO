@@ -17,7 +17,8 @@ const ICO = {
 };
 
 const params = new URLSearchParams(location.search);
-const id = params.get("id") || "";
+// Enlace corto: cita.html?<id>. También se aceptan los enlaces anteriores: cita.html?id=<id>&a=cancelar
+const id = params.get("id") || location.search.slice(1).split("&")[0];
 const accion = params.get("a");
 let ref = null, cita = null;
 

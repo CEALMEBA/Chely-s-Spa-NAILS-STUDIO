@@ -60,7 +60,7 @@ Las citas se agrupan por día y se ordenan por hora. Cada una muestra hora, esta
 - **cancelada**: se canceló y la hora quedó libre otra vez.
 
 ### Confirmar una cita (pendiente)
-1. Pulsa **Pedir confirmación**. Se abre WhatsApp con el mensaje ya escrito, que incluye los enlaces **Confirmar cita** y **Cancelar cita**.
+1. Pulsa **Pedir confirmación**. Se abre WhatsApp con el mensaje ya escrito, que incluye un enlace corto. Al abrirlo, la clienta ve su cita y los botones **Confirmar cita** y **Cancelar cita**.
 2. Envía el mensaje. La tarjeta mostrará "Mensaje enviado · esperando respuesta" y el botón cambia a **Reenviar**.
 3. Cuando la clienta toca **Confirmar cita**, la cita pasa a **confirmada** sola y sale el aviso "… confirmó su cita". Si toca **Cancelar cita**, pasa a **cancelada** y la hora se libera.
 4. Si la clienta te confirmó por otro medio (llamada, mensaje), pulsa **Confirmar** para marcarla a mano.
