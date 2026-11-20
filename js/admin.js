@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider,
-  signInWithEmailAndPassword, signOut
+  signInWithEmailAndPassword, signInWithCredential, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore, collection, doc, writeBatch, query, where, orderBy, onSnapshot, updateDoc, runTransaction, setDoc, addDoc, serverTimestamp
@@ -242,7 +242,22 @@ const liberando = new Set();
 /* ---------- Login ---------- */
 $("adminDesde").value = hoy();
 $("btnLogout").onclick = () => signOut(auth);
-$("btnGoogle").onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => msg($("loginMsg"), e.message));
+// Entrar con Google: en la app de Android usa el login NATIVO (la cuenta del teléfono, sin popup);
+// en el navegador usa el popup normal. En ambos casos la sesión queda en el SDK web (para Firestore).
+async function entrarConGoogle() {
+  msg($("loginMsg"), "");
+  if (enApp() && window.Capacitor.Plugins.FirebaseAuthentication) {
+    try {
+      const res = await window.Capacitor.Plugins.FirebaseAuthentication.signInWithGoogle();
+      const idToken = res && res.credential && res.credential.idToken;
+      if (!idToken) throw new Error("No se obtuvo el token de Google");
+      await signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
+    } catch (e) { msg($("loginMsg"), e.message || "No se pudo entrar con Google"); }
+  } else {
+    signInWithPopup(auth, new GoogleAuthProvider()).catch(e => msg($("loginMsg"), e.message));
+  }
+}
+$("btnGoogle").onclick = entrarConGoogle;
 $("btnEntrar").onclick = () => signInWithEmailAndPassword(auth, $("email").value, $("pass").value)
   .catch(() => msg($("loginMsg"), "Correo o contraseña incorrectos"));
 $("pass").addEventListener("keydown", (e) => { if (e.key === "Enter") $("btnEntrar").click(); });
