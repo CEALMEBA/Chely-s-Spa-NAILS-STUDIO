@@ -5,7 +5,7 @@ import {
   getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, collection, query, where, orderBy, limit, onSnapshot
+  getFirestore, collection, query, where, orderBy, limit, onSnapshot, getDocs, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 // A rastreo.html solo entran las cuentas de RASTREO_EMAILS (por ahora, solo cesamendoza19@gmail.com).
 import { firebaseConfig, RASTREO_EMAILS } from "./firebase-config.js?v=20261119";
@@ -135,3 +135,38 @@ function iniciar() {
     });
   }, (e) => console.error(e)));
 }
+
+/* ---------- Borrar historial ---------- */
+// Borra el recorrido (rastro) y los accesos; la ubicación actual se queda y todo vuelve a registrarse desde ahora.
+// Dos toques para confirmar (sin ventanas emergentes).
+let armado = null;
+async function borrarColeccion(nombre) {
+  let total = 0;
+  for (;;) {
+    const snap = await getDocs(query(collection(db, nombre), limit(400)));
+    if (snap.empty) return total;
+    const b = writeBatch(db);
+    snap.docs.forEach(d => b.delete(d.ref));
+    await b.commit();
+    total += snap.size;
+  }
+}
+$("btnBorrarHist").onclick = async () => {
+  const btn = $("btnBorrarHist");
+  if (!armado) {
+    btn.textContent = "¿Seguro? Toca otra vez para borrar";
+    armado = setTimeout(() => { armado = null; btn.textContent = "Borrar historial"; }, 5000);
+    return;
+  }
+  clearTimeout(armado); armado = null;
+  btn.disabled = true; btn.textContent = "Borrando…";
+  try {
+    const r = await borrarColeccion("rastro");
+    const a = await borrarColeccion("accesos");
+    msg($("borrarMsg"), `Listo: se borraron ${r} puntos del recorrido y ${a} accesos. Desde ahora se registra de nuevo.`);
+  } catch (e) {
+    console.error(e);
+    msg($("borrarMsg"), "No se pudo borrar todo (revisa que las reglas nuevas estén publicadas en Firebase).");
+  }
+  btn.disabled = false; btn.textContent = "Borrar historial";
+};
