@@ -57,8 +57,6 @@ else onAuthStateChanged(auth, (u) => {
 let mapa = null, capaActual = null, capaHist = null, capaRuta = null, encuadrado = false;
 const COLORES = ["#8e1230", "#1565c0", "#2e7d32", "#6a1b9a"];   // un color por admin
 const colorDe = (email) => { let h = 0; for (const c of email) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORES[h % COLORES.length]; };
-// Hora real del punto: "t" si viene del celular, si no la del servidor.
-const horaDe = (d) => d.t?.toDate ? d.t : d.creada;
 const esHoy = (ts) => { if (!ts?.toDate) return false; const d = ts.toDate(), n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate(); };
 function crearMapa() {
   if (mapa) return;
@@ -105,35 +103,19 @@ function iniciar() {
   // Recorrido del día: une los puntos de hoy en una línea por cada admin (la ruta por donde anduvo).
   // Todo el día (desde las 00:00), sin tope: con la app el rastreo es continuo y 500 puntos eran ~4 horas.
   const inicioDia = new Date(); inicioDia.setHours(0, 0, 0, 0);
-  // Se ordena por "t" (la hora en que el GPS tomó el punto): los puntos guardados sin señal llegan
-  // después, todos juntos, y así se acomodan en su lugar en vez de revolver la línea.
   unsubs.push(onSnapshot(query(collection(db, "rastro"), where("creada", ">=", inicioDia), orderBy("creada", "desc")), (snap) => {
     capaRuta.clearLayers();
     const porAdmin = new Map();
-    snap.docs.forEach(doc => {
-      const d = doc.data(), h = horaDe(d);
-      if (!esHoy(h) || num(d.lat) === null || num(d.lng) === null) return;
+    // Vienen del más nuevo al más viejo: los recorremos al revés para que la línea vaya en orden.
+    snap.docs.slice().reverse().forEach(doc => {
+      const d = doc.data();
+      if (!esHoy(d.creada) || num(d.lat) === null || num(d.lng) === null) return;
       if (!porAdmin.has(d.email)) porAdmin.set(d.email, []);
-      porAdmin.get(d.email).push({ ll: [d.lat, d.lng], ms: h.toDate().getTime() });
+      porAdmin.get(d.email).push([d.lat, d.lng]);
     });
     porAdmin.forEach((pts, email) => {
-      pts.sort((a, b) => a.ms - b.ms);
-      // Si pasaron más de 10 min entre dos puntos (GPS apagado o sin señal), ese tramo va punteado:
-      // se sabe dónde se perdió y dónde reapareció, pero no por dónde anduvo.
-      let tramo = [];
-      const cerrar = () => { if (tramo.length > 1) L.polyline(tramo, { color: colorDe(email), weight: 4, opacity: .7 }).addTo(capaRuta); };
-      pts.forEach((p, i) => {
-        const prev = pts[i - 1];
-        if (prev && p.ms - prev.ms > 10 * 60000) {
-          cerrar(); tramo = [];
-          const min = Math.round((p.ms - prev.ms) / 60000);
-          L.polyline([prev.ll, p.ll], { color: colorDe(email), weight: 2, opacity: .6, dashArray: "6 8" })
-            .bindTooltip(`Sin GPS ${min >= 60 ? Math.floor(min / 60) + " h " + (min % 60) + " min" : min + " min"}`, { sticky: true })
-            .addTo(capaRuta);
-        }
-        tramo.push(p.ll);
-      });
-      cerrar();
+      if (pts.length < 2) return;
+      L.polyline(pts, { color: colorDe(email), weight: 4, opacity: .7 }).addTo(capaRuta);
     });
   }, (e) => console.error(e)));
 
@@ -143,13 +125,13 @@ function iniciar() {
     const filas = snap.docs.map(d => d.data());
     $("accesos").innerHTML = filas.length ? filas.map(d => {
       const ok = num(d.lat) !== null && num(d.lng) !== null;
-      return `<div class="rt-fila"><div><b>${esc(d.email)}</b><small>${esc(cuando(horaDe(d)))} · ${esc(d.dispositivo || "")}${ok && d.motivo ? " · " + esc(d.motivo) : ""}</small></div>
+      return `<div class="rt-fila"><div><b>${esc(d.email)}</b><small>${esc(cuando(d.creada))} · ${esc(d.dispositivo || "")}</small></div>
         ${ok ? `<a href="${maps(d.lat, d.lng)}" target="_blank" rel="noopener">Ver mapa</a>` : `<small>${esc(d.motivo || "sin ubicación")}</small>`}</div>`;
     }).join("") : `<div class="empty">Sin accesos registrados todavía.</div>`;
     filas.forEach(d => {
       if (num(d.lat) === null || num(d.lng) === null) return;
       L.circleMarker([d.lat, d.lng], { radius: 5, color: "#6d0f27", weight: 1, fillColor: "#d9a441", fillOpacity: .9 })
-        .bindPopup(popup(String(d.email), cuando(horaDe(d)))).addTo(capaHist);
+        .bindPopup(popup(String(d.email), cuando(d.creada))).addTo(capaHist);
     });
   }, (e) => console.error(e)));
 }
