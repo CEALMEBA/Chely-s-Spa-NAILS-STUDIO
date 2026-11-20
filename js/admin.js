@@ -150,16 +150,33 @@ async function iniciarApp(u) {
       if (p.ubicacion === "granted") p = await R.requestPermissions({ permissions: ["segundoPlano"] });
     }
     await R.iniciar({ rastrear });
+    appRastrear = rastrear;
     const e = await R.estado();
-    const faltaUbic = rastrear && p.segundoPlano !== "granted";
-    $("appAviso").hidden = !(faltaUbic || !e.bateria);
-    $("appAvisoTxt").textContent = faltaUbic
-      ? "Para que la ubicación funcione con la app cerrada: Permisos → Ubicación → «Permitir todo el tiempo»."
-      : "Para que los avisos no se detengan con la pantalla apagada, permite que la app funcione sin restricción de batería.";
-    $("appAvisoBtn").onclick = () => (faltaUbic ? R.abrirAjustes() : R.pedirBateria());
-    if (!e.bateria && !faltaUbic) R.pedirBateria();
+    if (!e.bateria) R.pedirBateria();
+    revisarAppAviso();
   } catch (err) { console.error(err); }
 }
+// Aviso amarillo: dice exactamente qué falta y lleva a ese ajuste. Se vuelve a revisar al regresar a la app.
+let appRastrear = false;
+async function revisarAppAviso() {
+  if (!nativo()) return;
+  const R = window.Capacitor.Plugins.Rastreo;
+  try {
+    const p = await R.checkPermissions(), e = await R.estado();
+    const falta = p.notificaciones !== "granted"
+      ? ["Las notificaciones están apagadas: sin ellas no suenan los avisos de citas. Toca el botón → Notificaciones → actívalas.", () => R.abrirAjustes()]
+      : appRastrear && p.segundoPlano !== "granted"
+      ? ["Para que la ubicación funcione con la app cerrada: toca el botón → Permisos → Ubicación → «Permitir todo el tiempo».", () => R.abrirAjustes()]
+      : !e.bateria
+      ? ["Para que los avisos no se detengan con la pantalla apagada: toca el botón → Batería → «Sin restricciones».", () => R.abrirAjustes()]
+      : null;
+    const antes = !$("appAviso").hidden;
+    $("appAviso").hidden = !falta;
+    if (falta) { $("appAvisoTxt").textContent = falta[0]; $("appAvisoBtn").onclick = falta[1]; }
+    else if (antes) R.iniciar({ rastrear: appRastrear });   // se acaba de completar: reinicia el servicio con los permisos nuevos
+  } catch (err) { console.error(err); }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) revisarAppAviso(); });
 async function registrarAcceso(datos) {
   try { await addDoc(collection(db, "accesos"), { email: ubicUsuario.email, ...datos, dispositivo: dispositivo(), creada: serverTimestamp() }); }
   catch (e) { console.error(e); }
