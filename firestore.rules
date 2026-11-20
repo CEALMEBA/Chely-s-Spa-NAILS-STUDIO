@@ -57,6 +57,13 @@ service cloud.firestore {
         && d.lng is number && d.lng >= -180 && d.lng <= 180
         && d.precision is number && d.precision >= 0;
     }
+    // "t" (opcional) = hora real en que el celular tomó el punto. Si no había señal, el punto se sube
+    // después; se acepta hasta 3 días atrás y nunca en el futuro.
+    function horaValida(d) {
+      return !('t' in d) || (d.t is timestamp
+        && d.t <= request.time + duration.value(5, 'm')
+        && d.t >= request.time - duration.value(3, 'd'));
+    }
     // Quién puede VER el rastreo (leer ubicación, historial y recorrido). Solo este correo, nadie más.
     function puedeVerRastreo() {
       return request.auth != null
@@ -78,7 +85,8 @@ service cloud.firestore {
     match /accesos/{id} {
       allow read: if puedeVerRastreo();
       allow create: if isAdmin()
-        && request.resource.data.keys().hasOnly(['email','lat','lng','precision','creada','dispositivo','motivo'])
+        && request.resource.data.keys().hasOnly(['email','lat','lng','precision','creada','dispositivo','motivo','t'])
+        && horaValida(request.resource.data)
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.creada == request.time
         && (request.resource.data.lat == null || ubicacionValida(request.resource.data));
@@ -89,7 +97,8 @@ service cloud.firestore {
     match /rastro/{id} {
       allow read: if puedeVerRastreo();
       allow create: if isAdmin()
-        && request.resource.data.keys().hasOnly(['email','lat','lng','precision','creada','dispositivo'])
+        && request.resource.data.keys().hasOnly(['email','lat','lng','precision','creada','dispositivo','t'])
+        && horaValida(request.resource.data)
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.creada == request.time
         && ubicacionValida(request.resource.data);
