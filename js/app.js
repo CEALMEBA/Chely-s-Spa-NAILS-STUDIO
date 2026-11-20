@@ -3,7 +3,8 @@ import {
   getFirestore, collection, doc, writeBatch, query, where, orderBy, getDocs,
   serverTimestamp, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js?v=20261116";
+import { firebaseConfig } from "./firebase-config.js?v=20261119";
+import { avisarCelular } from "./aviso.js?v=20261119";
 import { ICONOS, CATALOGO, categoriaDe } from "./catalogo.js?v=20261116";
 
 let db = null;
@@ -88,6 +89,7 @@ $("formCita").addEventListener("submit", async (e) => {
       fecha, hora, slotId, estado: "pendiente", creada: serverTimestamp()
     });
     await b.commit();
+    avisarCelular("Cita nueva 💅", `${$("servicio").value} · ${fmtFecha(fecha)} ${hora}`, "bell");
     msg($("msg"), "");
     mostrarExito({ nombre: $("nombre").value.trim(), telefono: $("telefono").value, servicio: $("servicio").value, fecha, hora });
     $("formCita").reset(); $("hora").innerHTML = "";

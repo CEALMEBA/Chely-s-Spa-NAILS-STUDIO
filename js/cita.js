@@ -2,7 +2,8 @@
 // Nunca cambia nada al abrirse: la clienta siempre tiene que tocar un botón.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig, WHATSAPP_NEGOCIO } from "./firebase-config.js?v=20261116";
+import { firebaseConfig, WHATSAPP_NEGOCIO } from "./firebase-config.js?v=20261119";
+import { avisarCelular } from "./aviso.js?v=20261119";
 import { ICONOS, categoriaDe } from "./catalogo.js?v=20261116";
 
 const $ = (id) => document.getElementById(id);
@@ -69,6 +70,8 @@ async function responder(estado, respuesta) {
   try {
     await updateDoc(ref, { estado, respuesta });
     cita.estado = estado;
+    avisarCelular(respuesta === "cancelo" ? "Cita cancelada ❌" : "Cita confirmada ✅",
+      `${cita.servicio} · ${fmtFecha(cita.fecha)} ${cita.hora}`, respuesta === "cancelo" ? "x" : "white_check_mark");
     pintar();
   } catch (e) {
     console.error(e);

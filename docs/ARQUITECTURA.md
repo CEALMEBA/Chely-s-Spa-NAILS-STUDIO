@@ -29,6 +29,8 @@ Sitio de citas sin servidor propio: páginas estáticas en GitHub Pages + Fireba
 | `admin.html` | Panel de administración. |
 | `js/admin.js` | Login, lista de citas en tiempo real, confirmar / cancelar / marcar atendida, mensajes de WhatsApp, enlace a Google Calendar. |
 | `js/firebase-config.js` | Configuración pública de Firebase, correos admin (solo para mostrar el panel) y número del negocio. |
+| `js/aviso.js` | Aviso al celular vía ntfy.sh (tema en `firebase-config.js`) al reservar, confirmar o cancelar. Sin nombre ni teléfono. |
+| `rastreo.html`, `js/rastreo.js` | Página aparte (login Firebase, solo correos admin): mapa con la ubicación actual y el historial de aperturas del panel. |
 | `firestore.rules` | Reglas de seguridad de la base de datos. Se pegan en Firebase Console → Firestore → Reglas. |
 | `css/style.css` | Estilos de ambas páginas (adaptativo a celular). |
 | `img/` | Logo (flor). |
@@ -48,6 +50,8 @@ El id es fijo (p. ej. `2026-11-20_1000`), así dos clientas no pueden reservar l
 1. **Reservar (clienta):** elige servicio y día → `app.js` lee `slots` de ese día y ofrece solo las horas libres → al enviar, un `writeBatch` crea el `slot` y la `appointment` a la vez (todo o nada) → aparece la ventana de éxito.
 2. **Atender (administradora):** inicia sesión → `admin.js` escucha `appointments` en tiempo real → "Pedir confirmación" abre WhatsApp con el mensaje y los enlaces Confirmar / Cancelar → la clienta abre `cita.html` y toca un botón → la cita cambia a confirmada o cancelada (si cancela, el panel libera el `slot` en una transacción); "Cancelar" libera el `slot`; "Atendida" cierra el servicio.
 3. **Recordatorio:** botón "Recordar" (WhatsApp) y botón de Google Calendar con el evento prellenado.
+
+**`ubicacion/{correo}`** — última ubicación (lat, lng, precisión) de cada cuenta en `TRACK_EMAILS`, mientras tenga el panel abierto y haya dado permiso. **`accesos/{id}`** — historial de aperturas del panel.
 
 ## Reglas de negocio
 

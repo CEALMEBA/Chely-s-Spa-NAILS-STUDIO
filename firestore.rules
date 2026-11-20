@@ -42,5 +42,50 @@ service cloud.firestore {
       allow delete: if isAdmin();
       allow update: if false;
     }
+
+    // Rastreo. Las dos admins ESCRIBEN su ubicación, pero solo cesamendoza19 puede LEER el rastreo.
+    function ubicacionValida(d) {
+      return d.lat is number && d.lat >= -90 && d.lat <= 90
+        && d.lng is number && d.lng >= -180 && d.lng <= 180
+        && d.precision is number && d.precision >= 0;
+    }
+    // Quién puede VER el rastreo (leer ubicación, historial y recorrido). Solo este correo, nadie más.
+    function puedeVerRastreo() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'cesamendoza19@gmail.com';
+    }
+    // Última ubicación conocida: un documento por correo, se va sobrescribiendo.
+    match /ubicacion/{correo} {
+      allow read: if puedeVerRastreo();
+      allow create, update: if isAdmin()
+        && correo == request.auth.token.email
+        && request.resource.data.keys().hasOnly(['email','lat','lng','precision','actualizada','dispositivo'])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.actualizada == request.time
+        && ubicacionValida(request.resource.data);
+      allow delete: if false;
+    }
+    // Historial: una fila cada vez que se abre el panel (con o sin ubicación).
+    match /accesos/{id} {
+      allow read: if puedeVerRastreo();
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['email','lat','lng','precision','creada','dispositivo','motivo'])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.creada == request.time
+        && (request.resource.data.lat == null || ubicacionValida(request.resource.data));
+      allow update, delete: if false;
+    }
+    // Recorrido: un punto por minuto mientras el panel está abierto (se dibuja como ruta en el mapa).
+    match /rastro/{id} {
+      allow read: if puedeVerRastreo();
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['email','lat','lng','precision','creada','dispositivo'])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.creada == request.time
+        && ubicacionValida(request.resource.data);
+      allow update: if false;
+      allow delete: if puedeVerRastreo();
+    }
   }
 }

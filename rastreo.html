@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#6d0f27">
+<title>Rastreo · Chely's Spa</title>
+<link rel="icon" type="image/png" href="img/logo-flor.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/style.css?v=20261119a">
+</head>
+<body class="adm">
+<header class="adm-top">
+  <div class="adm-brand">
+    <img src="img/logo-flor-blanco.png" alt="" width="40" height="33">
+    <div><b>Chely's Spa</b><small>Rastreo de la administradora</small></div>
+  </div>
+  <div class="adm-user">
+    <span id="admUser" class="adm-mail"></span>
+    <button id="btnLogout" class="btn small light" hidden>Salir</button>
+  </div>
+</header>
+
+<main class="adm-main">
+  <div id="admCargando" class="empty"><span class="spin"></span>Cargando…</div>
+  <div id="loginBox" class="card adm-login" hidden>
+    <img src="img/logo-flor.png" alt="" width="72" height="59" class="adm-login-logo">
+    <h2>Acceso restringido</h2>
+    <p class="lead">Solo cuentas registradas en Firebase.</p>
+    <button type="button" class="btn google" id="btnGoogle">Continuar con Google</button>
+    <p class="sep">o con correo</p>
+    <input type="email" id="email" placeholder="Correo" autocomplete="username">
+    <input type="password" id="pass" placeholder="Contraseña" autocomplete="current-password">
+    <button type="button" class="btn" id="btnEntrar">Entrar</button>
+    <p id="loginMsg" class="msg"></p>
+  </div>
+
+  <div id="rastreoArea" hidden>
+    <div class="adm-hello">
+      <div><p class="eyebrow">UBICACIÓN</p><h2>¿Dónde anda?</h2></div>
+      <span class="live" id="admLive"><i></i>En vivo</span>
+    </div>
+    <div id="ubicaciones" class="rt-cards"></div>
+    <div id="mapa" class="rt-mapa"></div>
+    <h3 class="rt-tit">Dónde se abrió el panel</h3>
+    <div id="accesos" class="rt-lista"></div>
+    <p class="rt-nota">La ubicación se actualiza mientras el panel de citas esté abierto en su celular o computadora, y solo con su permiso (el navegador lo pide y el panel muestra un botón para apagarlo).</p>
+  </div>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module" src="js/rastreo.js?v=20261119d"></script>
+</body>
+</html>

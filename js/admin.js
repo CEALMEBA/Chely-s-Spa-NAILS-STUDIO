@@ -4,9 +4,9 @@ import {
   signInWithEmailAndPassword, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, collection, doc, writeBatch, query, where, orderBy, onSnapshot, updateDoc, runTransaction
+  getFirestore, collection, doc, writeBatch, query, where, orderBy, onSnapshot, updateDoc, runTransaction, setDoc, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js?v=20261116";
+import { firebaseConfig, ADMIN_EMAILS, TRACK_EMAILS } from "./firebase-config.js?v=20261119";
 import { ICONOS, categoriaDe } from "./catalogo.js?v=20261116";
 
 const $ = (id) => document.getElementById(id);
@@ -46,7 +46,7 @@ const calLink = (c) => {
 
 /* ---------- Alertas: sonido, notificación y título de la pestaña ---------- */
 // Funcionan mientras el panel esté abierto (aunque sea en otra pestaña o minimizado).
-// Con el panel cerrado no llega nada: eso requeriría notificaciones push con servidor (plan de pago de Firebase).
+// Con el panel cerrado el aviso llega al celular por ntfy (js/aviso.js), disparado al reservar, confirmar o cancelar.
 const TITULO = document.title;
 let alertasOn = false, pendientesAviso = 0, audioCtx = null, parpadeo = null;
 try { alertasOn = localStorage.getItem("alertasAdmin") === "1"; } catch { /* sin almacenamiento */ }
@@ -105,6 +105,75 @@ $("btnAlertas").addEventListener("click", async () => {
   pintarBtnAlertas();
 });
 pintarBtnAlertas();
+
+/* ---------- Ubicación de la administradora (se ve en rastreo.html) ---------- */
+// Solo cuentas de TRACK_EMAILS. En el navegador: ubica mientras el panel está abierto.
+// Dentro de la app de Android (Capacitor): ubica en segundo plano, aun con la pantalla apagada.
+let ubicWatch = null, ubicUltimo = 0, ubicInicio = 0, ubicUsuario = null, accesoHecho = false;
+const enApp = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const dispositivo = () => (enApp() ? "app" : /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) ? "celular" : "computadora");
+
+function detenerUbic() {
+  if (ubicWatch === null) return;
+  if (enApp()) { try { window.Capacitor.Plugins.BackgroundGeolocation.removeWatcher({ id: ubicWatch }); } catch { /* ignorar */ } }
+  else navigator.geolocation.clearWatch(ubicWatch);
+  ubicWatch = null;
+}
+async function registrarAcceso(datos) {
+  try { await addDoc(collection(db, "accesos"), { email: ubicUsuario.email, ...datos, dispositivo: dispositivo(), creada: serverTimestamp() }); }
+  catch (e) { console.error(e); }
+}
+// Un punto del recorrido (el rastro del día que se dibuja en el mapa).
+async function guardarRastro(d) {
+  try { await addDoc(collection(db, "rastro"), { email: ubicUsuario.email, ...d, dispositivo: dispositivo(), creada: serverTimestamp() }); }
+  catch (e) { console.error(e); }
+}
+// Guarda una lectura (ubicación actual + punto del recorrido), a lo más una por minuto.
+async function guardarUbicacion(lat, lng, prec) {
+  const ahora = Date.now();
+  const primera = ubicUltimo === 0;
+  if (primera && prec > 100 && (ahora - ubicInicio) < 20000) return;   // espera una buena al arrancar
+  if (!primera && ahora - ubicUltimo < 60000) return;                  // después, un punto por minuto
+  ubicUltimo = ahora;
+  const d = { lat, lng, precision: Math.round(prec) };
+  try {
+    await setDoc(doc(db, "ubicacion", ubicUsuario.email), { email: ubicUsuario.email, ...d, dispositivo: dispositivo(), actualizada: serverTimestamp() });
+  } catch (e) { console.error(e); }
+  guardarRastro(d);
+  if (!accesoHecho) { accesoHecho = true; registrarAcceso(d); }
+}
+async function iniciarUbic(u) {
+  ubicUsuario = u; detenerUbic(); ubicUltimo = 0; ubicInicio = Date.now();
+  if (!TRACK_EMAILS.includes(u.email)) return;
+  if (enApp()) {
+    // App de Android: rastreo en segundo plano con notificación fija (obligatoria en Android).
+    try {
+      const BG = window.Capacitor.Plugins.BackgroundGeolocation;
+      ubicWatch = await BG.addWatcher({
+        backgroundTitle: "Chely's Spa",
+        backgroundMessage: "Compartiendo tu ubicación con el salón.",
+        requestPermissions: true,
+        stale: false,
+        distanceFilter: 10
+      }, (location, error) => {
+        if (error) {
+          if (error.code === "NOT_AUTHORIZED" && !accesoHecho) {
+            accesoHecho = true; registrarAcceso({ lat: null, lng: null, precision: null, motivo: "sin permiso" });
+          }
+          return;
+        }
+        if (location) guardarUbicacion(location.latitude, location.longitude, location.accuracy || 0);
+      });
+    } catch (e) { console.error(e); }
+    return;
+  }
+  // Navegador: ubica con el panel abierto. Máxima precisión (GPS, sin lecturas viejas).
+  if (!navigator.geolocation) return;
+  ubicWatch = navigator.geolocation.watchPosition(
+    (pos) => guardarUbicacion(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+    (err) => { if (err.code === 1 && !accesoHecho) { accesoHecho = true; registrarAcceso({ lat: null, lng: null, precision: null, motivo: "sin permiso" }); } },
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+}
 
 /* ---------- Mensajes de WhatsApp ---------- */
 // Emoji y frase según la categoría del servicio (primera palabra de la categoría en catalogo.js).
@@ -193,7 +262,8 @@ else onAuthStateChanged(auth, (u) => {
     $("admSaludo").textContent = (h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches") + (nombre ? ", " + nombre : "");
     $("admHoy").textContent = fmtFecha(hoy()).toUpperCase();
     escuchar();
-  } else if (unsub) { unsub(); unsub = null; }
+    iniciarUbic(u);
+  } else { detenerUbic(); accesoHecho = false; if (unsub) { unsub(); unsub = null; } }
 });
 
 /* ---------- Datos en vivo ---------- */

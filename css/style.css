@@ -275,3 +275,15 @@ a.adm-brand{color:#fff;text-decoration:none}
 .hello-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .alert-btn{border:1px solid #e8d6d3;background:#fff;color:#5a4a4e;border-radius:99px;padding:5px 12px;font:inherit;font-size:.78rem;font-weight:600;cursor:pointer;box-shadow:0 2px 10px #8e123012}
 .alert-btn.on{background:#e3f6e8;border-color:#b9e3c5;color:#116b2a}
+
+/* ---------- Página de rastreo ---------- */
+.rt-mapa{height:min(55vh,460px);border-radius:16px;margin:12px 0;box-shadow:0 2px 14px #8e123018;z-index:0}
+.rt-cards{display:grid;gap:8px}
+.rt-card{background:#fff;border-radius:14px;padding:12px 14px;display:grid;gap:3px;box-shadow:0 2px 10px #8e123012}
+.rt-card span,.rt-fila small{font-size:.85rem;color:#6a5a5e}
+.rt-card a,.rt-fila a{font-size:.85rem;font-weight:600;color:var(--red)}
+.rt-tit{margin:18px 0 8px;font-size:1rem}
+.rt-lista{display:grid;gap:6px}
+.rt-fila{background:#fff;border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rt-fila div{display:grid}
+.rt-nota{font-size:.8rem;color:#7a6a6e;margin:14px 0}
