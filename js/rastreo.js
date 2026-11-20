@@ -5,7 +5,7 @@ import {
   getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, collection, query, orderBy, limit, onSnapshot
+  getFirestore, collection, query, where, orderBy, limit, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 // A rastreo.html solo entran las cuentas de RASTREO_EMAILS (por ahora, solo cesamendoza19@gmail.com).
 import { firebaseConfig, RASTREO_EMAILS } from "./firebase-config.js?v=20261119";
@@ -101,7 +101,9 @@ function iniciar() {
   }, (e) => { console.error(e); $("admLive").classList.add("off"); }));
 
   // Recorrido del día: une los puntos de hoy en una línea por cada admin (la ruta por donde anduvo).
-  unsubs.push(onSnapshot(query(collection(db, "rastro"), orderBy("creada", "desc"), limit(500)), (snap) => {
+  // Todo el día (desde las 00:00), sin tope: con la app el rastreo es continuo y 500 puntos eran ~4 horas.
+  const inicioDia = new Date(); inicioDia.setHours(0, 0, 0, 0);
+  unsubs.push(onSnapshot(query(collection(db, "rastro"), where("creada", ">=", inicioDia), orderBy("creada", "desc")), (snap) => {
     capaRuta.clearLayers();
     const porAdmin = new Map();
     // Vienen del más nuevo al más viejo: los recorremos al revés para que la línea vaya en orden.
