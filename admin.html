@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20261119a">
+<link rel="stylesheet" href="css/style.css?v=20261120a">
 </head>
 <body class="adm">
 <header class="adm-top">
@@ -52,6 +52,17 @@
       </span>
     </div>
 
+    <div id="appAviso" class="app-aviso" hidden>
+      <span id="appAvisoTxt"></span>
+      <button type="button" class="act" id="appAvisoBtn">Abrir ajustes</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-vista="citas">📅 Citas</button>
+      <button class="tab" data-vista="clientas">👥 Clientas <span id="tabCliN">0</span></button>
+    </div>
+
+    <div id="vistaCitas">
     <div class="stats" id="stats">
       <button class="stat" data-go="hoy"><b id="stHoy">0</b><span>Citas hoy</span></button>
       <button class="stat warn" data-go="pendiente"><b id="stPend">0</b><span>Por confirmar</span></button>
@@ -86,10 +97,28 @@
     </div>
 
     <div id="adminCitas" class="agenda"></div>
+    </div>
+
+    <!-- CLIENTAS: se agregan solas cuando confirman su cita -->
+    <div id="vistaClientas" hidden>
+      <div class="card promo">
+        <label for="promoTxt"><b>Mensaje de promoción</b> <small>({nombre} se cambia por el nombre de cada clienta)</small></label>
+        <textarea id="promoTxt" rows="5"></textarea>
+        <div class="promo-btns">
+          <button type="button" class="act" id="btnCsv">⬇ Descargar lista (WhatsApp Business)</button>
+          <button type="button" class="act" id="btnContactosCel" hidden>📇 Guardar todas en mis contactos</button>
+        </div>
+      </div>
+      <div class="tool-row">
+        <input type="search" id="buscarCli" placeholder="Buscar clienta por nombre, teléfono o servicio">
+      </div>
+      <p class="cli-res" id="cliResumen"></p>
+      <div id="cliLista" class="agenda"></div>
+    </div>
   </div>
 </main>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script type="module" src="js/admin.js?v=20261119g"></script>
+<script type="module" src="js/admin.js?v=20261120a"></script>
 </body>
 </html>

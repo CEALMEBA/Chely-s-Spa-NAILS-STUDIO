@@ -33,6 +33,14 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Clientas que confirmaron (para promociones). Solo las administradoras las ven y editan.
+    match /contactos/{tel} {
+      allow read, delete: if isAdmin();
+      allow create, update: if isAdmin()
+        && tel.matches('^[0-9]{10}$')
+        && request.resource.data.telefono == tel;
+    }
+
     // Horarios ocupados: solo fecha/hora, sin datos personales. Un horario no se puede reservar dos veces
     // (el id es fijo y no se permite update, así el segundo intento falla).
     match /slots/{slotId} {

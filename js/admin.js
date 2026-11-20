@@ -4,7 +4,7 @@ import {
   signInWithEmailAndPassword, signInWithCredential, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, collection, doc, writeBatch, query, where, orderBy, onSnapshot, updateDoc, runTransaction, setDoc, addDoc, serverTimestamp
+  getFirestore, collection, doc, writeBatch, query, where, orderBy, onSnapshot, updateDoc, runTransaction, setDoc, addDoc, serverTimestamp, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, ADMIN_EMAILS, TRACK_EMAILS } from "./firebase-config.js?v=20261119";
 import { ICONOS, categoriaDe } from "./catalogo.js?v=20261116";
@@ -90,6 +90,7 @@ function sonido(tipo) {
   } catch { /* sin audio */ }
 }
 function alerta(tipo, titulo, cuerpo) {
+  if (nativo()) return;   // en la app: el servicio nativo avisa con su propio tono (aunque esté cerrada)
   if (!alertasOn) return;
   sonido(tipo);
   try { navigator.vibrate?.([200, 100, 200]); } catch { /* sin vibración */ }
@@ -128,9 +129,36 @@ const dispositivo = () => (enApp() ? "app" : /Android|iPhone|iPad|Mobile/i.test(
 
 function detenerUbic() {
   if (ubicWatch === null) return;
-  if (enApp()) { try { window.Capacitor.Plugins.BackgroundGeolocation.removeWatcher({ id: ubicWatch }); } catch { /* ignorar */ } }
-  else navigator.geolocation.clearWatch(ubicWatch);
+  navigator.geolocation.clearWatch(ubicWatch);
   ubicWatch = null;
+}
+
+/* ---------- App de Android: servicio nativo siempre activo ---------- */
+// Manda la ubicación y avisa de citas (tono distinto para nueva / confirmada / cancelada) aunque la app
+// esté cerrada o el celular se reinicie. Al confirmar una clienta la agrega a los Contactos del celular.
+const nativo = () => enApp() && !!window.Capacitor.Plugins.Rastreo;
+async function iniciarApp(u) {
+  if (!nativo()) return;
+  const R = window.Capacitor.Plugins.Rastreo;
+  try {
+    await R.requestPermissions({ permissions: ["notificaciones"] });
+    await R.requestPermissions({ permissions: ["contactos"] });
+    const rastrear = TRACK_EMAILS.includes(u.email);
+    let p = { ubicacion: "denied", segundoPlano: "denied" };
+    if (rastrear) {
+      p = await R.requestPermissions({ permissions: ["ubicacion"] });
+      if (p.ubicacion === "granted") p = await R.requestPermissions({ permissions: ["segundoPlano"] });
+    }
+    await R.iniciar({ rastrear });
+    const e = await R.estado();
+    const faltaUbic = rastrear && p.segundoPlano !== "granted";
+    $("appAviso").hidden = !(faltaUbic || !e.bateria);
+    $("appAvisoTxt").textContent = faltaUbic
+      ? "Para que la ubicación funcione con la app cerrada: Permisos → Ubicación → «Permitir todo el tiempo»."
+      : "Para que los avisos no se detengan con la pantalla apagada, permite que la app funcione sin restricción de batería.";
+    $("appAvisoBtn").onclick = () => (faltaUbic ? R.abrirAjustes() : R.pedirBateria());
+    if (!e.bateria && !faltaUbic) R.pedirBateria();
+  } catch (err) { console.error(err); }
 }
 async function registrarAcceso(datos) {
   try { await addDoc(collection(db, "accesos"), { email: ubicUsuario.email, ...datos, dispositivo: dispositivo(), creada: serverTimestamp() }); }
@@ -158,28 +186,7 @@ async function guardarUbicacion(lat, lng, prec) {
 async function iniciarUbic(u) {
   ubicUsuario = u; detenerUbic(); ubicUltimo = 0; ubicInicio = Date.now();
   if (!TRACK_EMAILS.includes(u.email)) return;
-  if (enApp()) {
-    // App de Android: rastreo en segundo plano con notificación fija (obligatoria en Android).
-    try {
-      const BG = window.Capacitor.Plugins.BackgroundGeolocation;
-      ubicWatch = await BG.addWatcher({
-        backgroundTitle: "Chely's Spa",
-        backgroundMessage: "Compartiendo tu ubicación con el salón.",
-        requestPermissions: true,
-        stale: false,
-        distanceFilter: 10
-      }, (location, error) => {
-        if (error) {
-          if (error.code === "NOT_AUTHORIZED" && !accesoHecho) {
-            accesoHecho = true; registrarAcceso({ lat: null, lng: null, precision: null, motivo: "sin permiso" });
-          }
-          return;
-        }
-        if (location) guardarUbicacion(location.latitude, location.longitude, location.accuracy || 0);
-      });
-    } catch (e) { console.error(e); }
-    return;
-  }
+  if (nativo()) return;            // en la app lo hace el servicio nativo (iniciarApp)
   // Navegador: ubica con el panel abierto. Máxima precisión (GPS, sin lecturas viejas).
   if (!navigator.geolocation) return;
   ubicWatch = navigator.geolocation.watchPosition(
@@ -254,7 +261,13 @@ const liberando = new Set();
 
 /* ---------- Login ---------- */
 $("adminDesde").value = hoy();
-$("btnLogout").onclick = () => signOut(auth);
+$("btnLogout").onclick = async () => {
+  if (nativo()) {   // apaga el servicio (ya no rastrea ni avisa) y cierra también la sesión nativa
+    try { await window.Capacitor.Plugins.Rastreo.detener(); } catch { /* ignorar */ }
+    try { await window.Capacitor.Plugins.FirebaseAuthentication.signOut(); } catch { /* ignorar */ }
+  }
+  signOut(auth);
+};
 // Entrar con Google: en la app de Android usa el login NATIVO (la cuenta del teléfono, sin popup);
 // en el navegador usa el popup normal. En ambos casos la sesión queda en el SDK web (para Firestore).
 async function entrarConGoogle() {
@@ -291,7 +304,10 @@ else onAuthStateChanged(auth, (u) => {
     $("admHoy").textContent = fmtFecha(hoy()).toUpperCase();
     escuchar();
     iniciarUbic(u);
-  } else { detenerUbic(); accesoHecho = false; if (unsub) { unsub(); unsub = null; } }
+    iniciarApp(u);
+    escucharClientas();
+    guardarPendientes();
+  } else { detenerUbic(); accesoHecho = false; if (unsub) { unsub(); unsub = null; } if (unsubCli) { unsubCli(); unsubCli = null; } }
 });
 
 /* ---------- Datos en vivo ---------- */
@@ -324,6 +340,7 @@ function escuchar() {
     });
     respuestas = new Map(citas.map(c => [c.id, c.respuesta]));
     citas.forEach(liberarSiCancelo);
+    citas.forEach(guardarContacto);
     primera = false;
     $("admLive").classList.remove("off");
     pintar();
@@ -544,4 +561,120 @@ $("adminCitas").addEventListener("click", async (e) => {
     console.error(err); toast("No se pudo guardar (" + (err.code || "error") + ")");
     t.disabled = false;
   }
+});
+
+/* ---------- Clientas: se guardan solas al confirmar, para mandarles promociones ---------- */
+// Un documento por teléfono en "contactos". Se guarda una sola vez por cita (marca contactoGuardado).
+const guardandoCli = new Set();
+async function guardarContacto(c) {
+  if (!["confirmada", "atendida"].includes(c.estado) || c.contactoGuardado
+    || !/^\d{10}$/.test(c.telefono || "") || guardandoCli.has(c.id)) return;
+  guardandoCli.add(c.id);
+  try {
+    await runTransaction(db, async (tx) => {
+      const r = doc(db, "appointments", c.id), k = doc(db, "contactos", c.telefono);
+      const s = await tx.get(r), ks = await tx.get(k);
+      if (!s.exists() || s.data().contactoGuardado) return;
+      const prev = ks.exists() ? ks.data() : null;
+      tx.set(k, {
+        nombre: c.nombre, telefono: c.telefono, ultimoServicio: c.servicio || "",
+        ultimaCita: prev && prev.ultimaCita > c.fecha ? prev.ultimaCita : c.fecha,
+        citas: (prev?.citas || 0) + 1, promos: prev ? prev.promos !== false : true,
+        ultimaPromo: prev?.ultimaPromo || null,
+        creada: prev?.creada || serverTimestamp(), actualizada: serverTimestamp()
+      });
+      tx.update(r, { contactoGuardado: true });
+    });
+  } catch (e) { console.error(e); }
+  guardandoCli.delete(c.id);
+}
+// Al entrar: guarda las confirmadas/atendidas de días anteriores que aún no estaban en la lista.
+async function guardarPendientes() {
+  try {
+    const snap = await getDocs(query(collection(db, "appointments"), where("estado", "in", ["confirmada", "atendida"])));
+    for (const d of snap.docs) await guardarContacto({ id: d.id, ...d.data() });
+  } catch (e) { console.error(e); }
+}
+
+let clientas = [], unsubCli = null, vista = "citas";
+function escucharClientas() {
+  if (unsubCli) unsubCli();
+  unsubCli = onSnapshot(collection(db, "contactos"), (snap) => {
+    clientas = snap.docs.map(d => d.data()).sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), "es"));
+    $("tabCliN").textContent = clientas.length;
+    if (vista === "clientas") pintarClientas();
+  }, (e) => console.error(e));
+}
+
+const PROMO_DEF = "¡Hola, {nombre}! 🌸\nEn *Chely's Spa Nails Studio* tenemos una promoción especial para ti: …\n\n¡Te esperamos! 💖";
+try { $("promoTxt").value = localStorage.getItem("promoTxt") || PROMO_DEF; } catch { $("promoTxt").value = PROMO_DEF; }
+$("promoTxt").addEventListener("input", () => { try { localStorage.setItem("promoTxt", $("promoTxt").value); } catch { /* ignorar */ } });
+const textoPromo = (c) => $("promoTxt").value.replaceAll("{nombre}", String(c.nombre || "").split(" ")[0]);
+
+function pintarClientas() {
+  const t = $("buscarCli").value.trim().toLowerCase();
+  const lista = clientas.filter(c => !t || [c.nombre, c.telefono, c.ultimoServicio].some(v => String(v || "").toLowerCase().includes(t)));
+  const activas = clientas.filter(c => c.promos !== false).length;
+  $("cliResumen").textContent = `${clientas.length} clienta${clientas.length === 1 ? "" : "s"} · ${activas} reciben promociones`;
+  $("btnContactosCel").hidden = !nativo();
+  if (!lista.length) {
+    $("cliLista").innerHTML = `<div class="empty">${clientas.length ? "Nadie coincide con la búsqueda." : "Aún no hay clientas. Se agregan solas cuando confirman su cita."}</div>`;
+    return;
+  }
+  const h = hoy();
+  $("cliLista").innerHTML = lista.map(c => {
+    const no = c.promos === false;
+    const tel = esc(c.telefono);
+    const enviada = c.ultimaPromo ? (c.ultimaPromo === h ? "Promo enviada hoy" : "Última promo: " + fmtFecha(c.ultimaPromo)) : "";
+    return `<article class="cli${no ? " no" : ""}">
+      <div class="cli-i"><b>${esc(c.nombre)}</b>
+        <span>${tel} · ${c.citas || 1} cita${(c.citas || 1) === 1 ? "" : "s"} · última ${esc(fmtFecha(c.ultimaCita))}</span>
+        <small>${esc(String(c.ultimoServicio || "").split(" - ").pop())}${enviada ? " · " + esc(enviada) : ""}</small></div>
+      <div class="cli-a">
+        ${no ? "" : `<a class="act wa" target="_blank" rel="noopener" data-promo="${tel}" href="${esc(waLink(c.telefono, textoPromo(c)))}">${SVG.wa}Enviar promo</a>`}
+        <button class="act ghost" data-baja="${tel}">${no ? "Volver a enviar" : "No enviar más"}</button>
+      </div></article>`;
+  }).join("");
+}
+$("buscarCli").addEventListener("input", pintarClientas);
+$("promoTxt").addEventListener("change", pintarClientas);
+$("cliLista").addEventListener("click", async (e) => {
+  const t = e.target.closest("[data-promo],[data-baja]"); if (!t) return;
+  try {
+    if (t.dataset.promo) await updateDoc(doc(db, "contactos", t.dataset.promo), { ultimaPromo: hoy() });
+    else {
+      const c = clientas.find(x => x.telefono === t.dataset.baja);
+      await updateDoc(doc(db, "contactos", t.dataset.baja), { promos: !!(c && c.promos === false) });
+    }
+  } catch (err) { console.error(err); toast("No se pudo guardar (" + (err.code || "error") + ")"); }
+});
+// Lista para importar en WhatsApp Business (listas de difusión) o en Google Contactos.
+$("btnCsv").addEventListener("click", () => {
+  const filas = [["Nombre", "Telefono", "Citas", "Ultima cita", "Ultimo servicio"]]
+    .concat(clientas.filter(c => c.promos !== false).map(c => [c.nombre + " (Chely's Spa)", "+52" + c.telefono, c.citas || 1, c.ultimaCita, c.ultimoServicio]));
+  const csv = "﻿" + filas.map(f => f.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = `clientas-chelys-${hoy()}.csv`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+});
+// En la app: guarda en los Contactos del celular a todas las que aún no estén.
+$("btnContactosCel").addEventListener("click", async () => {
+  const R = window.Capacitor.Plugins.Rastreo;
+  try {
+    const p = await R.requestPermissions({ permissions: ["contactos"] });
+    if (p.contactos !== "granted") return toast("Permite el acceso a Contactos en los ajustes de la app");
+    $("btnContactosCel").disabled = true;
+    const r = await R.guardarContactos({ lista: clientas.map(c => ({ nombre: c.nombre, telefono: c.telefono })) });
+    toast(r.agregados ? `${r.agregados} agregada${r.agregados === 1 ? "" : "s"} a tus contactos como «Nombre (Chely's Spa)»` : "Todas ya estaban en tus contactos");
+  } catch (err) { console.error(err); toast("No se pudieron guardar los contactos"); }
+  $("btnContactosCel").disabled = false;
+});
+
+document.querySelector(".tabs").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-vista]"); if (!b) return;
+  vista = b.dataset.vista;
+  document.querySelectorAll(".tabs [data-vista]").forEach(x => x.classList.toggle("on", x === b));
+  $("vistaCitas").hidden = vista !== "citas"; $("vistaClientas").hidden = vista !== "clientas";
+  if (vista === "clientas") pintarClientas();
 });
