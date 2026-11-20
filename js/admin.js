@@ -59,21 +59,34 @@ function pintarBtnAlertas() {
   b.title = bloqueado ? "El navegador bloqueó las notificaciones: actívalas en el candado junto a la dirección. El sonido sí funciona."
     : "Sonido y avisos cuando llegue o se confirme una cita";
 }
-const tono = (ctx, f, t0, dur) => {
-  const o = ctx.createOscillator(), g = ctx.createGain();
-  o.type = "sine"; o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
-  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.start(t0); o.stop(t0 + dur + 0.02);
+// Una campana suave: golpe rápido + cola larga que decae, con armónicos metálicos.
+// vol más alto que antes para que se escuche aunque el celular esté en la bolsa o haya ruido.
+const campana = (ctx, f, t0, dur, vol = 0.6) => {
+  [[1, 1], [2.01, 0.5], [3.01, 0.28], [4.18, 0.14]].forEach(([mult, amp]) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sine"; o.frequency.value = f * mult; o.connect(g); g.connect(ctx.destination);
+    const peak = Math.max(0.0002, vol * amp);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + 0.006);   // golpe
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);   // cola que se apaga
+    o.start(t0); o.stop(t0 + dur + 0.02);
+  });
 };
 function sonido(tipo) {
   try {
     audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === "suspended") audioCtx.resume();
     const t = audioCtx.currentTime;
-    const notas = tipo === "cancelo" ? [[523, 0, .18], [392, .2, .3]]          // baja: canceló
-      : tipo === "confirmo" ? [[659, 0, .14], [880, .16, .14], [1175, .32, .28]] // sube: confirmó
-      : [[880, 0, .18], [1175, .22, .18], [880, .5, .18], [1175, .72, .3]];        // timbre: cita nueva
-    notas.forEach(([f, d, l]) => tono(audioCtx, f, t + d, l));
+    if (tipo === "cancelo") {                 // cancelada: campana que baja, suave
+      campana(audioCtx, 660, t, 1.1, 0.5);
+      campana(audioCtx, 495, t + 0.30, 1.5, 0.5);
+    } else if (tipo === "confirmo") {         // confirmada: campana que sube, alegre
+      campana(audioCtx, 784, t, 1.1, 0.6);
+      campana(audioCtx, 1047, t + 0.26, 1.6, 0.65);
+    } else {                                  // cita nueva: doble campana clara "ting-ting", más fuerte
+      campana(audioCtx, 880, t, 1.4, 0.8);
+      campana(audioCtx, 880, t + 0.34, 1.9, 0.8);
+    }
   } catch { /* sin audio */ }
 }
 function alerta(tipo, titulo, cuerpo) {
